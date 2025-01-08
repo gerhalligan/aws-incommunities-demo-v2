@@ -304,28 +304,30 @@ useEffect(() => {
     }
   }, []);
 
-  const getFilteredOptions = () => {
+const getFilteredOptions = useCallback(() => {
     let filteredOptions = currentQuestion.options;
 
-    if (currentQuestion.dependsOn) {
-      currentQuestion.dependsOn.forEach(dependency => {
-        const dependentQuestion = questions.find(q => q.id === dependency.questionId);
-        if (!dependentQuestion) return;
+    // Filter options based on their dependencies
+    filteredOptions = filteredOptions.filter(option => {
+      // If option has no dependencies, always show it
+      if (!option.dependsOn) {
+        return true;
+      }
 
-        filteredOptions = filteredOptions.filter(option => {
-          if (!option.dependsOn) return true;
-          return option.dependsOn.some(dep => 
-            dep.questionId === dependency.questionId && 
-            dependency.options.includes(dep.optionId)
-          );
-        });
+      // Check each dependency
+      return option.dependsOn.every(dep => {
+        const dependentAnswer = answers.get(dep.questionId);
+        if (!dependentAnswer || typeof dependentAnswer !== 'object') {
+          return false;
+        }
+        return dependentAnswer.id === dep.optionId;
       });
-    }
+    });
 
     return filteredOptions.filter((option) =>
       option.text.toLowerCase().includes(searchQuery.toLowerCase())
     );
-  };
+  }, [currentQuestion, answers, searchQuery]);
 
   const handleOptionSelect = async (option: Option) => {
     console.log('handleOptionSelect called with option:', option);
@@ -369,6 +371,7 @@ useEffect(() => {
       console.log('AI Lookup not enabled for this question');
     }
   };
+
 
   const handleInputSubmit = async (value: string, branchContext?: BranchContext) => {
     console.log('handleInputSubmit called with value:', value);

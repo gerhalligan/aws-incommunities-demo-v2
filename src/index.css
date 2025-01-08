@@ -52,7 +52,7 @@
 @layer utilities {
   .custom-scrollbar {
     scrollbar-width: thin;
-    scrollbar-color: #9b87f5 #f3f4f6;
+    scrollbar-color: hsl(var(--primary)) hsl(var(--muted));
   }
 
   .custom-scrollbar::-webkit-scrollbar {
@@ -60,12 +60,12 @@
   }
 
   .custom-scrollbar::-webkit-scrollbar-track {
-    background: #f3f4f6;
+    background: hsl(var(--muted));
     border-radius: 3px;
   }
 
   .custom-scrollbar::-webkit-scrollbar-thumb {
-    background-color: #9b87f5;
+    background-color: hsl(var(--primary));
     border-radius: 3px;
   }
 }
