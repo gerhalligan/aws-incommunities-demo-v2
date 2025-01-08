@@ -47,15 +47,29 @@ export const Header = () => {
           {/* Main Navigation */}
           <Menubar className="hidden md:flex border-none">
             <MenubarMenu>
-              <MenubarTrigger className="font-medium">View</MenubarTrigger>
+              <MenubarTrigger className="font-medium">Change View</MenubarTrigger>
               <MenubarContent>
                 <MenubarItem className="cursor-pointer" onClick={() => handleViewChange("user")}>
                   <User className="mr-2 h-4 w-4" />
-                  <span>User</span>
+                  <span>App User View</span>
                 </MenubarItem>
                 <MenubarItem className="cursor-pointer" onClick={() => handleViewChange("admin")}>
-                  <Users className="mr-2 h-4 w-4" />
-                  <span>Admin</span>
+                  <Settings className="mr-2 h-4 w-4" />
+                  <span>App Admin View</span>
+                </MenubarItem>
+              </MenubarContent>
+            </MenubarMenu>
+
+              <MenubarMenu>
+              <MenubarTrigger className="font-medium">Account</MenubarTrigger>
+              <MenubarContent>
+                <MenubarItem className="cursor-pointer" onClick={() => navigate("/profile")}>
+                  <UserCircle className="mr-2 h-4 w-4" />
+                  <span>Profile</span>
+                </MenubarItem>
+                <MenubarItem className="cursor-pointer" onClick={handleLogout}>
+                  <LogOut className="mr-2 h-4 w-4" />
+                  <span>Logout</span>
                 </MenubarItem>
               </MenubarContent>
             </MenubarMenu>
@@ -87,19 +101,7 @@ export const Header = () => {
               </MenubarContent>
             </MenubarMenu>
 
-            <MenubarMenu>
-              <MenubarTrigger className="font-medium">Account</MenubarTrigger>
-              <MenubarContent>
-                <MenubarItem className="cursor-pointer" onClick={() => navigate("/profile")}>
-                  <UserCircle className="mr-2 h-4 w-4" />
-                  <span>Profile</span>
-                </MenubarItem>
-                <MenubarItem className="cursor-pointer" onClick={handleLogout}>
-                  <LogOut className="mr-2 h-4 w-4" />
-                  <span>Logout</span>
-                </MenubarItem>
-              </MenubarContent>
-            </MenubarMenu>
+          
           </Menubar>
         </div>
 
@@ -113,11 +115,11 @@ export const Header = () => {
               <MenubarContent>
                 <MenubarItem className="cursor-pointer" onClick={() => handleViewChange("user")}>
                   <User className="mr-2 h-4 w-4" />
-                  <span>User View</span>
+                  <span>App User View</span>
                 </MenubarItem>
                 <MenubarItem className="cursor-pointer" onClick={() => handleViewChange("admin")}>
-                  <Users className="mr-2 h-4 w-4" />
-                  <span>Admin View</span>
+                  <Settings className="mr-2 h-4 w-4" />
+                  <span>App Admin View</span>
                 </MenubarItem>
                 <MenubarItem className="cursor-pointer" onClick={() => navigate("/documentation")}>
                   <Book className="mr-2 h-4 w-4" />

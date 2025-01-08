@@ -50,7 +50,7 @@ export const UserInfo = () => {
           </span>
         </div>
         <div className="flex items-center gap-2">
-          <span className="px-2 py-1 bg-purple-100 text-purple-700 rounded-full text-xs font-medium capitalize">
+          <span className="px-2 py-1 bg-primary/10 text-primary rounded-full text-xs font-medium capitalize">
             {userInfo.role}
           </span>
         </div>

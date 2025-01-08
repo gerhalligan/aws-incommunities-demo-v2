@@ -39,7 +39,7 @@ export const OptionsList = ({
                   selectedOption === null
                     ? "bg-gray-50 hover:bg-gray-100 text-gray-700"
                     : selectedOption.id === option.id
-                    ? "bg-primary text-white scale-[1.02]"
+                    ? "bg-primary text-primary-foreground scale-[1.02]"
                     : "bg-gray-50 text-gray-400 hover:bg-gray-100",
                   "animate-fade-in"
                 )}

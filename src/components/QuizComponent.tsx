@@ -172,11 +172,11 @@ export const QuizComponent = () => {
                     {currentBranch ? (
                       <div className="flex flex-col gap-1">
                         <div className="flex items-center gap-2">
-                          <span className="text-sm text-purple-600 px-2 py-0.5 bg-purple-50 rounded-full">
+                          <span className="text-sm text-primary px-2 py-0.5 bg-primary/10 rounded-full">
                             Entry {entryNumber} Questions
                           </span>
                         </div>
-                        <div className="mt-2 p-3 bg-purple-50 rounded-lg">
+                        <div className="mt-2 p-3 bg-primary/5 rounded-lg">
                           {Object.entries(currentBranch.entryValues).map(([key, value]) => {
                             console.log('Processing field:', key);
                             console.log('currentBranch:', currentBranch);

@@ -30,7 +30,7 @@ export const DashboardCard = () => {
             <Button 
               variant="secondary" 
               className="w-full bg-white/10 hover:bg-white/20 backdrop-blur-sm text-white border-white/20 transition-colors"
-              onClick={() => navigate("/dashboard")}
+              onClick={() => navigate("/dashboard/")}
             >
               Open Dashboard
               <ArrowRight className="w-4 h-4 ml-2" />

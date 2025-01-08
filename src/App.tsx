@@ -12,6 +12,7 @@ import Settings from "./pages/Settings";
 import Login from "./pages/Login";
 import Profile from "./pages/Profile";
 import Documentation from "./pages/Documentation";
+import { DashboardRoutes } from "./components/Dashboard/DashboardDemo";
 
 const queryClient = new QueryClient();
 
@@ -48,6 +49,7 @@ const App = () => (
                 </ProtectedRoute>
               }
             />
+            <Route path="/dashboard/*" element={<DashboardRoutes />} />
             <Route
               path="/"
               element={

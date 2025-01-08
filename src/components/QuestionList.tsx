@@ -71,7 +71,7 @@ const SortableQuestionItem = ({ question, isActive, onClick, id, onDelete }: Que
         <GripVertical className="w-4 h-4" />
       </button>
       <div onClick={onClick} className="flex-1 cursor-pointer">
-        {question.question} ({question.id})
+        {question.question} (ID:{question.id})
       </div>
        <Button
         variant="ghost"

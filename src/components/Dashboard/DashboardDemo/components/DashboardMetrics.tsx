@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Card } from "../../components/ui/card";
+import { Card } from "@/components/ui/card";
 import { motion, AnimatePresence } from "framer-motion";
 import { BarChart as BarChartIcon, Users, Clock, FolderGit2, ChevronDown, ChevronUp } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
@@ -11,7 +11,7 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "../../components/ui/select";
+} from "@/components/ui/select";
 import { useDashboard } from "../context/DashboardContext";
 
 interface DashboardMetricsProps {}
