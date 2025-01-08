@@ -102,6 +102,7 @@ export interface RepeaterConfig {
   fields: RepeaterField[];
   minEntries?: number;
   maxEntries?: number;
+  branchable?: boolean;
 }
 
 export interface RepeaterEntry {

@@ -6,7 +6,6 @@ import { Checkbox } from "./ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
 import { Card } from "./ui/card";
 import { Plus, Trash, GripVertical } from "lucide-react";
-import { cn } from "@/lib/utils";
 import type { RepeaterField, FieldType, RepeaterConfig } from "@/types/quiz";
 import {
   DndContext,
@@ -24,16 +23,24 @@ import {
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 
-interface RepeaterConfigProps {
+export interface RepeaterConfigProps {
   config: RepeaterConfig;
   onUpdate: (config: RepeaterConfig) => void;
 }
 
-interface DraftConfig extends RepeaterConfig {
+type DraftConfig = RepeaterConfig & {
   isDirty?: boolean;
 }
 
-const SortableField = ({ field, onUpdate, onRemove }) => {
+type SortableFieldProps = {
+  field: RepeaterField;
+  onUpdate: (field: RepeaterField) => void;
+  onRemove: (id: string) => void;
+}
+
+const SortableField = ({ field, onUpdate, onRemove }: SortableFieldProps) => {
+  const [newOption, setNewOption] = useState("");
+
   const {
     attributes,
     listeners,
@@ -84,6 +91,50 @@ const SortableField = ({ field, onUpdate, onRemove }) => {
           </Select>
         </div>
 
+        {(field.type === 'select' || field.type === 'radio' || field.type === 'checkbox') && (
+          <div className="col-span-4 mt-4 space-y-2">
+            <Label>Options</Label>
+            <div className="space-y-2">
+              {field.options?.map((option) => (
+                <div key={option} className="flex gap-2">
+                  <Input value={option} readOnly className="flex-1" />
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => {
+                      onUpdate({
+                        ...field,
+                        options: field.options?.filter(opt => opt !== option) || []
+                      });
+                    }}
+                  >
+                    <Trash className="w-4 h-4 text-red-500" />
+                  </Button>
+                </div>
+              ))}
+              <div className="flex gap-2">
+                <Input
+                  value={newOption}
+                  onChange={(e) => setNewOption(e.target.value)} 
+                  placeholder="New option"
+                  className="flex-1"
+                />
+                <Button onClick={() => {
+                  if (newOption.trim()) {
+                    onUpdate({
+                      ...field,
+                      options: [...(field.options || []), newOption.trim()]
+                    });
+                    setNewOption("");
+                  }
+                }}>
+                  <Plus className="w-4 h-4 mr-2" /> Add
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
+
         <div className="flex flex-col justify-end">
           <Label>Required</Label>
           <div className="flex items-center h-10 gap-2">
@@ -118,6 +169,8 @@ const SortableField = ({ field, onUpdate, onRemove }) => {
 
 export const RepeaterConfig = ({ config, onUpdate }: RepeaterConfigProps) => {
   const [draftConfig, setDraftConfig] = useState<DraftConfig>(config);
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+
   const sensors = useSensors(
     useSensor(PointerSensor),
     useSensor(KeyboardSensor, {
@@ -152,7 +205,13 @@ export const RepeaterConfig = ({ config, onUpdate }: RepeaterConfigProps) => {
 
   const handleUpdateField = (updatedField: RepeaterField) => {
     const newFields = draftConfig.fields.map(field =>
-      field.id === updatedField.id ? updatedField : field
+      field.id === updatedField.id ? {
+        ...updatedField,
+        // Reset options when changing away from select/radio/checkbox
+        options: ['select', 'radio', 'checkbox'].includes(updatedField.type) 
+          ? updatedField.options 
+          : undefined
+      } : field
     );
     setDraftConfig({ ...draftConfig, fields: newFields, isDirty: true });
   };
@@ -168,7 +227,10 @@ export const RepeaterConfig = ({ config, onUpdate }: RepeaterConfigProps) => {
   const handleSave = () => {
     onUpdate({
       ...draftConfig,
-      isDirty: undefined
+      fields: draftConfig.fields,
+      minEntries: draftConfig.minEntries,
+      maxEntries: draftConfig.maxEntries,
+      branchable: draftConfig.branchable
     });
     setDraftConfig({ ...draftConfig, isDirty: false });
   };
@@ -183,9 +245,9 @@ export const RepeaterConfig = ({ config, onUpdate }: RepeaterConfigProps) => {
               <Checkbox
                 id="branchable"
                 checked={draftConfig.branchable || false}
-                onCheckedChange={(checked) => setDraftConfig({
+                onCheckedChange={(checked: boolean | string) => setDraftConfig({
                   ...draftConfig,
-                  branchable: checked,
+                  branchable: checked === true,
                   isDirty: true
                 })}
               />
