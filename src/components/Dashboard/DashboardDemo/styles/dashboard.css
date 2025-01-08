@@ -1,0 +1,22 @@
+/* Dashboard-specific styles with scoped classes */
+.dashboard-card-hover {
+  @apply transition-all duration-300 hover:shadow-lg hover:-translate-y-1;
+}
+
+.dashboard-glass-card {
+  @apply bg-white/80 backdrop-blur-sm border border-white/20 shadow-sm;
+}
+
+.dashboard-fade-in {
+  @apply animate-in duration-500;
+  animation: dashboardFadeIn 0.5s ease-out;
+}
+
+.dashboard-slide-in {
+  @apply animate-in slide-in-from-bottom duration-500;
+}
+
+@keyframes dashboardFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
