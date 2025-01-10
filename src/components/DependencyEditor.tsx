@@ -4,6 +4,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
 import { X, Save } from "lucide-react";
 
 interface DependencyEditorProps {
@@ -16,6 +17,86 @@ interface DependencyEditorProps {
 export const DependencyEditor = ({ question, questions, onUpdate, className = "" }: DependencyEditorProps) => {
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const previousQuestions = questions.filter(q => q.id < question.id);
+  const [optionFilters, setOptionFilters] = useState<Record<number, string>>({});
+
+  const filterOptions = (options: Option[], questionId: number) => {
+    const filter = optionFilters[questionId];
+    if (!filter) return options;
+     return options.filter(opt => 
+      opt.text.toLowerCase().includes(filter.toLowerCase())
+     );
+  };
+
+   const handleSelectAllOptionDependencies = (optionId: string, prevQuestionId: number, filteredOptions: Option[]) => {
+    const option = question.options.find(opt => opt.id === optionId);
+    const prevQuestion = questions.find(q => q.id === prevQuestionId);
+    
+    if (!option || !prevQuestion) return;
+    
+    const allOptionsSelected = filteredOptions.every(prevOpt => 
+      option.dependsOn?.some(dep => 
+        dep.questionId === prevQuestionId && 
+        dep.optionId === prevOpt.id
+      )
+    );
+    
+    const updatedOptions = question.options.map(opt => {
+      if (opt.id === optionId) {
+        const newDependsOn = [...(opt.dependsOn || [])];
+        
+        if (allOptionsSelected) {
+          // Remove all dependencies for this question
+          return {
+            ...opt,
+            dependsOn: newDependsOn.filter(dep => 
+              dep.questionId !== prevQuestionId || 
+              !filteredOptions.some(opt => opt.id === dep.optionId)
+            )
+          };
+        } else {
+          // Add all filtered options as dependencies
+           const existingDeps = newDependsOn.filter(dep => 
+             dep.questionId !== prevQuestionId || 
+            !filteredOptions.some(opt => opt.id === dep.optionId)
+           );
+          const newDeps = filteredOptions.map(prevOpt => ({
+            questionId: prevQuestionId,
+            optionId: prevOpt.id
+          }));
+          return {
+            ...opt,
+            dependsOn: [...existingDeps, ...newDeps]
+          };
+        }
+      }
+      return opt;
+    });
+    
+    setHasUnsavedChanges(true);
+    onUpdate({ options: updatedOptions });
+  };
+
+  const handleSelectAllOptions = (questionId: number) => {
+    const dependency = question.dependsOn?.find(dep => dep.questionId === questionId);
+    const dependentQuestion = questions.find(q => q.id === questionId);
+    
+    if (!dependency || !dependentQuestion) return;
+    
+    const allOptionsSelected = dependentQuestion.options.length === dependency.options.length;
+    
+    const updatedDependencies = question.dependsOn?.map(dep => {
+      if (dep.questionId === questionId) {
+        return {
+          ...dep,
+          options: allOptionsSelected ? [] : dependentQuestion.options.map(opt => opt.id)
+        };
+      }
+      return dep;
+    }) || [];
+    
+    setHasUnsavedChanges(true);
+    onUpdate({ dependsOn: updatedDependencies });
+  };
 
   const handleAddDependency = (dependentQuestionId: number) => {
     const updatedDependencies = [
@@ -85,13 +166,22 @@ export const DependencyEditor = ({ question, questions, onUpdate, className = ""
             <div key={dependency.questionId} className="p-4 border rounded-lg space-y-2">
               <div className="flex items-center justify-between">
                 <h4 className="font-medium">{dependentQuestion.question}</h4>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => handleRemoveDependency(dependency.questionId)}
-                >
-                  <X className="w-4 h-4" />
-                </Button>
+                 <div className="flex items-center gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleSelectAllOptions(dependency.questionId)}
+                  >
+                    {dependentQuestion.options.length === dependency.options.length ? 'Deselect All' : 'Select All'}
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => handleRemoveDependency(dependency.questionId)}
+                  >
+                    <X className="w-4 h-4" />
+                  </Button>
+                </div>
               </div>
               <div className="flex flex-wrap gap-2">
                 {dependentQuestion.options.map((option) => (
@@ -124,9 +214,44 @@ export const DependencyEditor = ({ question, questions, onUpdate, className = ""
                 .filter(q => q.type === 'multiple-choice')
                 .map((prevQuestion) => (
                   <div key={prevQuestion.id} className="space-y-2">
-                    <Label className="text-sm text-gray-600">{prevQuestion.question}</Label>
+                     <div className="flex items-center justify-between">
+                      <Label className="text-sm text-gray-600">{prevQuestion.question}</Label>
+                       <div className="flex items-center gap-2">
+                        <Input
+                          type="text"
+                          placeholder="Filter options..."
+                          value={optionFilters[prevQuestion.id] || ''}
+                         onChange={(e) => setOptionFilters(prev => ({
+                           ...prev,
+                           [prevQuestion.id]: e.target.value
+                         }))}
+                          className="h-8 w-48"
+                        />
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            const filteredOptions = filterOptions(prevQuestion.options, prevQuestion.id);
+                            handleSelectAllOptionDependencies(option.id, prevQuestion.id, filteredOptions);
+                          }}
+                        >
+                          {prevQuestion.options
+                            .filter(opt => !optionFilters[prevQuestion.id] || 
+                              opt.text.toLowerCase().includes(optionFilters[prevQuestion.id].toLowerCase()))
+                            .every(prevOpt => 
+                            option.dependsOn?.some(dep => 
+                              dep.questionId === prevQuestion.id && 
+                              dep.optionId === prevOpt.id
+                            )
+                          ) ? 'Deselect All' : 'Select All'}
+                        </Button>
+                      </div>
+                    </div>
                     <div className="flex flex-wrap gap-2">
-                      {prevQuestion.options.map((prevOption) => (
+                       {prevQuestion.options
+                        .filter(opt => !optionFilters[prevQuestion.id] || 
+                          opt.text.toLowerCase().includes(optionFilters[prevQuestion.id].toLowerCase()))
+                        .map((prevOption) => (
                         <Badge
                           key={prevOption.id}
                           variant={
