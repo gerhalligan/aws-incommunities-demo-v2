@@ -6,7 +6,7 @@ import { Checkbox } from "./ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
 import { Card } from "./ui/card";
 import { Plus, Trash, GripVertical } from "lucide-react";
-import type { RepeaterField, FieldType, RepeaterConfig } from "@/types/quiz";
+import type { RepeaterField, FieldType, RepeaterConfig as RepeaterConfigType } from "@/types/quiz";
 import {
   DndContext,
   closestCenter,
@@ -24,11 +24,11 @@ import {
 } from "@dnd-kit/sortable";
 
 export interface RepeaterConfigProps {
-  config: RepeaterConfig;
-  onUpdate: (config: RepeaterConfig) => void;
+  config: RepeaterConfigType;
+  onUpdate: (config: RepeaterConfigType) => void;
 }
 
-type DraftConfig = RepeaterConfig & {
+type DraftConfig = RepeaterConfigType  & {
   isDirty?: boolean;
 }
 

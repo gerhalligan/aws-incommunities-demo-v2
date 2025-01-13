@@ -3,65 +3,67 @@ import ReactMarkdown from "react-markdown";
 import { Card } from "./ui/card";
 import { Textarea } from "./ui/textarea";
 import { Button } from "./ui/button";
-import { Loader2, Edit3, Eye, Wand2 } from "lucide-react";
+import { Question } from "@/types/quiz";
+import { Loader2, Eye, Wand2 } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { getAnswer } from "@/services/answers";
 
 interface AIResponseProps {
   isLoading: boolean;
   response: string;
   onResponseChange: (response: string) => void;
-  storedAnalysis?: string; // Add this prop
   question?: Question;
+  branchContext?: string;
   onAILookup?: (value: string, buttonId?: string) => void;
   inputValue?: string;
-  buttonResponses?: Record<string, string>;
 }
 
-export const AIResponse = ({ 
-  isLoading, 
-  response, 
-  onResponseChange, 
-  storedAnalysis,
+export const AIResponse = ({
+  isLoading,
+  response,
+  onResponseChange,
   question,
+  branchContext,
   onAILookup,
   inputValue,
-  buttonResponses = {} 
 }: AIResponseProps) => {
   const [isEditing, setIsEditing] = useState(false);
-  const [selectedButtonId, setSelectedButtonId] = useState<string | null>(() => {
-    // If we have a stored analysis, find which button it belongs to
-    if (storedAnalysis && question?.aiLookup?.buttons) {
-      const firstButton = question.aiLookup.buttons.find(b => b.enabled);
-      if (firstButton && buttonResponses[firstButton.id] === storedAnalysis) {
-        return firstButton.id;
-      }
-    }
-    return null;
-  });
+  const [selectedButtonId, setSelectedButtonId] = useState<string | null>(null);
+  const [storedAnalysis, setStoredAnalysis] = useState<any>(null);
 
-  // <-- ADDED useEffect HERE
   useEffect(() => {
-    // Whenever question changes, reset local UI states:
-    setIsEditing(false);
-    setSelectedButtonId(null);
+    const fetchExistingAnswer = async () => {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) {
+          console.error("User not authenticated");
+          return;
+        }
 
-    // Reset the displayed text to storedAnalysis or empty
-    // so the Textarea won't show old data from the previous question.
-    onResponseChange(storedAnalysis || "");
-  }, [question?.id]); // Trigger on question change
+        if (!question) {
+          console.error("Missing required question parameter");
+          return;
+        }
 
-  // Decide which text to display
-  const currentResponse = selectedButtonId 
-    ? buttonResponses?.[selectedButtonId] || response
-    : storedAnalysis || response;
+        const existingAnswer = await getAnswer(user.id, question.id, branchContext);
+        console.log("Existing answer fetched:", existingAnswer);
 
-  // Just for debugging
-  console.log('AIResponse props:', {
-    response,
-    storedAnalysis,
-    buttonResponses,
-    selectedButtonId,
-    currentResponse
-  });
+        setStoredAnalysis(existingAnswer?.aiAnalysis || null);
+        onResponseChange(existingAnswer?.aiAnalysis?.analysis || "");
+      } catch (error) {
+        console.error("Error fetching existing answer:", error);
+      }
+    };
+
+    fetchExistingAnswer();
+  }, [question, branchContext, onResponseChange]);
+
+  const currentResponse =
+    selectedButtonId && storedAnalysis?.buttonResponses?.[selectedButtonId]
+      ? storedAnalysis.buttonResponses[selectedButtonId]
+      : storedAnalysis?.analysis || response;
+
+  const validResponse = typeof currentResponse === "string" ? currentResponse : "";
 
   return (
     <Card className="relative p-4 space-y-2">
@@ -74,11 +76,11 @@ export const AIResponse = ({
           </div>
         )}
       </div>
-      
+
       {isEditing ? (
         <>
           <Textarea
-            value={currentResponse}
+            value={validResponse}
             onChange={(e) => onResponseChange(e.target.value)}
             className="min-h-[150px] transition-opacity duration-200"
             style={{ opacity: isLoading ? 0.5 : 1 }}
@@ -94,19 +96,18 @@ export const AIResponse = ({
           {question?.aiLookup?.buttons?.length > 0 && (
             <div className="flex gap-2 mt-4 mb-4 border-t pt-4">
               {question.aiLookup.buttons
-                .filter(button => button.enabled)
+                .filter((button) => button.enabled)
                 .map((button) => (
-                  <Button 
+                  <Button
                     key={button.id}
                     variant={selectedButtonId === button.id ? "default" : "outline"}
                     onClick={() => {
                       if (selectedButtonId === button.id) {
-                        setSelectedButtonId(null);  // Deselect if already selected
+                        setSelectedButtonId(null); // Deselect if already selected
                       } else {
                         setSelectedButtonId(button.id);
-                        // Only call AI if we don't have a response for this button yet
-                        if (!buttonResponses[button.id]) {
-                          onAILookup?.(inputValue || '', button.id);
+                        if (!storedAnalysis?.buttonResponses?.[button.id]) {
+                          onAILookup?.(inputValue || "", button.id);
                         }
                       }
                     }}
@@ -116,12 +117,19 @@ export const AIResponse = ({
                     <Wand2 className="w-4 h-4 mr-2" />
                     {button.label}
                   </Button>
-                ))
-              }
+                ))}
             </div>
           )}
           <div className="p-4 bg-gray-50 border rounded-md">
-            <ReactMarkdown>{currentResponse}</ReactMarkdown>
+            {validResponse ? (
+              <ReactMarkdown>{validResponse}</ReactMarkdown>
+            ) : (
+              <div className="text-gray-500 text-sm">
+                {selectedButtonId
+                  ? "Click the button again to generate analysis"
+                  : "Select an analysis type above"}
+              </div>
+            )}
           </div>
         </div>
       )}

@@ -94,7 +94,11 @@ export const QuizComponent = () => {
         formData: currentFormData[index] || {} // Use the specific form data for this file
       };
    
-       await saveAnswer(currentQuestion.id, answer);
+       await saveAnswer(currentQuestion.id, answer, undefined, false, currentBranch ? {
+        parentQuestionId: currentBranch.parentQuestion?.id,
+        entryId: currentBranch.entryId,
+        entryIndex: currentBranch.entryIndex
+      } : undefined);
        
        // Update local state
        setAnswers(new Map(answers).set(currentQuestion.id, answer));
@@ -240,13 +244,6 @@ export const QuizComponent = () => {
                   isTransitioning={isTransitioning}
                   isLastBranchQuestion={isLastBranchQuestion}
                   currentQuestionIndex={currentQuestionIndex}
-                  storedAiAnalysis={
-                    selectedOption && typeof selectedOption === 'object' && 'aiAnalysis' in selectedOption 
-                      ? selectedOption.aiAnalysis 
-                      : answers.get(currentQuestion?.id) && typeof answers.get(currentQuestion?.id) === 'object'
-                        ? (answers.get(currentQuestion?.id) as any).aiAnalysis 
-                        : undefined
-                  }
                 />
               </div>
 

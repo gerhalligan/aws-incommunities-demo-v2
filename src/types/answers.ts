@@ -1,9 +1,9 @@
 import { FileMetadata } from './files';
 
 export interface BranchContext {
-  branchId: string;
   parentQuestionId: number;
   entryId: string;
+  entryIndex?: number;
 }
 
 export interface BaseAnswer {

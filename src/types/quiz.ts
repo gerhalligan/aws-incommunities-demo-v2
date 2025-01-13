@@ -1,15 +1,23 @@
+import { FileMetadata } from './files';
+
 export interface Option {
   id: string;
   text: string;
+  value?: string;
+  optionId?: string;
   nextQuestionId?: number;
   dependsOn?: {
     questionId: number;
     optionId: string;
   }[];
+  _isStoredAnswer?: boolean;
   buttonResponses?: Record<string, string>;
+  files?: FileMetadata[];
+  formData?: Record<string, string>;
+  aiAnalysis?: string;
 }
 
-interface RepeaterBranch {
+export interface RepeaterBranch {
   entryId: string;
   entryValues: Record<string, string | string[]>;
   branchAnswers: Map<number, string | Option>;

@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from ".
 import { Card } from "./ui/card";
 import { Plus, Trash } from "lucide-react";
 import { cn } from "@/lib/utils";
-import type { Question, RepeaterEntry, RepeaterField } from "@/types/quiz";
+import type { Question, RepeaterBranch, RepeaterEntry, RepeaterField } from "@/types/quiz";
 import { toast } from "sonner";
 import { getBranchAnswers } from "@/services/answers";
 
@@ -43,7 +43,8 @@ const EntryProgress = ({ entryId, totalQuestions, question }: EntryProgressProps
       const { answers, isComplete } = await getBranchAnswers(
         user.id, 
         question.id,
-        entryId
+        entryId,
+        totalQuestions
       );
 
       setProgress({

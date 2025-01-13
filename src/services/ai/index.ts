@@ -21,13 +21,23 @@ export const generateAIResponse = async (
         branchContext
       );
 
-      const existingButtonResponse = existingAnswer?.buttonResponses?.[buttonId];
+      const existingButtonResponse = existingAnswer?.aiAnalysis?.buttonResponses?.[buttonId];
       const existingValue = existingAnswer?.value;
       const currentValue = typeof currentAnswer === 'string' ? currentAnswer : currentAnswer.value;
       
       // Return existing response if we have one and the answer hasn't changed
       if (existingButtonResponse && existingValue === currentValue) {
-        return existingButtonResponse;
+        const existingAnswerData = {
+          value: existingValue || '',
+          aiAnalysis: {
+            analysis: existingButtonResponse,
+            buttonResponses: {
+              ...(existingAnswer?.aiAnalysis?.buttonResponses || {})
+            },
+          },
+        };
+      
+        return existingAnswerData;
       }
     }
 
@@ -49,12 +59,19 @@ export const generateAIResponse = async (
     if (questionId !== undefined && currentAnswer) {
        try {
         const answerData = {
-          ...currentAnswer,
-          buttonResponses: buttonId ? {
-            [buttonId]: response
-          } : undefined,
-          aiAnalysis: buttonId ? undefined : response
+          value: typeof currentAnswer === 'string' ? currentAnswer : currentAnswer?.value || '',
+          aiAnalysis: {
+            analysis: response,
+            buttonResponses: buttonId
+              ? {
+                  ...(currentAnswer?.aiAnalysis?.buttonResponses || {}),
+                  [buttonId]: response,
+                }
+              : currentAnswer?.aiAnalysis?.buttonResponses || {},
+          },
         };
+         
+        console.log('generateAIResponse.answerData', answerData);
 
         await saveAnswer(questionId, answerData, response, false, branchContext);
       } catch (error) {

@@ -192,7 +192,7 @@ export const useQuizState = () => {
   
 useEffect(() => {
   const loadAnswer = async () => {
-    if (!currentQuestion?.id || currentView !== "user" || isCompleted) return;
+    if (!currentQuestion?.id || currentView !== "user" ) return;
 
     try {
       const { data: { user } } = await supabase.auth.getUser();
@@ -250,35 +250,54 @@ useEffect(() => {
 
       // Set UI state based on answer type
       if (currentQuestion.type === 'input') {
-        const newValue = typeof savedAnswer === 'string' ? savedAnswer : savedAnswer.value;
+        const newValue = typeof savedAnswer === 'string' 
+          ? savedAnswer 
+          : savedAnswer.value;
+      
         if (inputValue !== newValue) {
           setInputValue(newValue);
         }
         setSelectedOption(null);
-        
-        // Only set AI analysis if it's a stored answer
+      
+        // Only set AI analysis if it's a stored answer and has AI analysis
         if (savedAnswer._isStoredAnswer && savedAnswer.aiAnalysis) {
           setAiAnalysis(savedAnswer.aiAnalysis);
         }
       } else if (currentQuestion.type === 'multiple-choice') {
-        const option = currentQuestion.options.find(opt => opt.id === savedAnswer.id);
+        const option = currentQuestion.options.find(opt => opt.id === savedAnswer?.id);
+      
         if (option && (!selectedOption || selectedOption.id !== option.id)) {
           setSelectedOption(option);
-          
-          // Only set AI analysis if it's a stored answer
+      
+          // Only set AI analysis if it's a stored answer and has AI analysis
           if (savedAnswer._isStoredAnswer && savedAnswer.aiAnalysis) {
             setAiAnalysis(savedAnswer.aiAnalysis);
           }
         }
+      
         if (inputValue !== '') {
           setInputValue('');
         }
       } else if (currentQuestion.type === 'repeater') {
-        if (inputValue !== savedAnswer) {
-          setInputValue(savedAnswer);
+        // For repeater, use the `rawValue` (if provided) or the saved answer directly
+        const repeaterValue = savedAnswer?.rawValue || savedAnswer?.value || savedAnswer;
+      
+        if (inputValue !== repeaterValue) {
+          setInputValue(repeaterValue);
         }
         setSelectedOption(null);
+      
+        // Handle AI analysis if enabled
+        if (savedAnswer._isStoredAnswer && savedAnswer.aiAnalysis) {
+          setAiAnalysis(savedAnswer.aiAnalysis);
+        }
       }
+      
+      // Ensure all question types can handle files if needed
+      if (savedAnswer?.files) {
+        setUploadedFiles(savedAnswer.files);
+      }
+
 
     } catch (error) {
       console.error("Error loading answer:", error);
@@ -330,33 +349,33 @@ const getFilteredOptions = useCallback(() => {
   }, [currentQuestion, answers, searchQuery]);
 
   const handleOptionSelect = async (option: Option) => {
-    console.log('handleOptionSelect called with option:', option);
+    //console.log('handleOptionSelect called with option:', option);
     setSelectedOption(option);
     if (currentQuestion.aiLookup?.enabled && currentQuestion.aiLookup?.prompt) {
       try {
-        console.log('AI Lookup enabled, generating prompt...');
+        //console.log('AI Lookup enabled, generating prompt...');
         let prompt = currentQuestion.aiLookup.prompt;
         prompt = prompt.replace("{{question}}", currentQuestion.question);
         prompt = prompt.replace("{{answer}}", option.text);
-        console.log('Generated prompt:', prompt);
+        //console.log('Generated prompt:', prompt);
   
-        console.log('Calling generateAIResponse...');
+        //console.log('Calling generateAIResponse...');
         const response = await generateAIResponse(prompt);
-        console.log('AI Response received:', response);
+        //console.log('AI Response received:', response);
         
-        console.log('Saving answer with AI analysis...');
+        //console.log('Saving answer with AI analysis...');
         await saveAnswer(currentQuestion.id, option, response);
-        console.log('Answer saved successfully');
+        //console.log('Answer saved successfully');
         
         // Update local state
-        console.log('Updating local answers state...');
+        //console.log('Updating local answers state...');
         setAnswers(prev => {
           const newAnswers = new Map(prev);
           newAnswers.set(currentQuestion.id, {
             ...option,
             aiAnalysis: response
           });
-          console.log('New answers state:', Object.fromEntries(newAnswers));
+          //console.log('New answers state:', Object.fromEntries(newAnswers));
           return newAnswers;
         });
       } catch (error) {
@@ -374,8 +393,8 @@ const getFilteredOptions = useCallback(() => {
 
 
   const handleInputSubmit = async (value: string, branchContext?: BranchContext) => {
-    console.log('handleInputSubmit called with value:', value);
-    console.log('Branch context:', branchContext);
+    //console.log('handleInputSubmit called with value:', value);
+    //console.log('Branch context:', branchContext);
     setInputValue(value);
 
     // Save answer without AI analysis
@@ -400,7 +419,7 @@ const getFilteredOptions = useCallback(() => {
           answerData.aiAnalysis = response;
         }*/
 
-        console.log('handleInputSubmit.answerData (before save)', answerData)
+        //console.log('handleInputSubmit.answerData (before save)', answerData)
       
        // Check if this is a repeater question and if we already have an answer
       if (currentQuestion.type === 'repeater') {
@@ -425,7 +444,7 @@ const getFilteredOptions = useCallback(() => {
         setAnswers(prev => {
             const newAnswers = new Map(prev);
             newAnswers.set(currentQuestion.id, answerData);
-            console.log('New answers state:', Object.fromEntries(newAnswers));
+            //console.log('New answers state:', Object.fromEntries(newAnswers));
             return newAnswers;
         });
     } catch (error) {
@@ -499,86 +518,111 @@ const getFilteredOptions = useCallback(() => {
     if (currentQuestion.type === 'multiple-choice' && !selectedOption) return;
     
     // For repeater questions
-    if (currentQuestion.type === 'repeater') {
-      const entries = inputValue ? JSON.parse(inputValue).entries : [];
-      const config = currentQuestion.repeaterConfig;
-    
-      // Check if all entries have completed their branched questions dynamically
-      if (config?.branchable) {
-        const remainingQuestions = questions.length - currentQuestionIndex - 1;
-        const incompleteEntries = [];
-    
-        for (const entry of entries) {
-          try {
-            const { data: { user } } = await supabase.auth.getUser();
-            if (!user) throw new Error("User not authenticated");
-    
-            const { isComplete } = await getBranchAnswers(
-              user.id,
-              currentQuestion.id,
-              entry.id,
-              remainingQuestions
-            );
-    
-            if (!isComplete) {
-              incompleteEntries.push(entry);
-            }
-          } catch (error) {
-            console.error(`Error checking branch status for entry ${entry.id}:`, error);
-            toast({
-              title: "Error",
-              description: `Failed to check branch status for entry ${entry.id}`,
-              variant: "destructive",
-            });
-            return;
-          }
+    if (currentQuestion.type === "repeater") {
+    let entries = [];
+  
+    // Safely parse inputValue or handle it as a pre-parsed object
+    try {
+      if (typeof inputValue === "string") {
+        const parsedInput = JSON.parse(inputValue); // Parse the JSON string
+        if (parsedInput && Array.isArray(parsedInput.entries)) {
+          entries = parsedInput.entries;
+        } else {
+          throw new Error("Invalid repeater input format");
         }
-    
-        if (incompleteEntries.length > 0) {
+      } else if (typeof inputValue === "object" && Array.isArray(inputValue.entries)) {
+        entries = inputValue.entries; // Use pre-parsed object
+      } else {
+        throw new Error("Unexpected inputValue format for repeater");
+      }
+    } catch (error) {
+      console.error("Error parsing repeater input value:", error);
+      toast({
+        title: "Error",
+        description: "Invalid repeater input format. Please correct your data.",
+        variant: "destructive",
+      });
+      return;
+    }
+  
+    const config = currentQuestion.repeaterConfig;
+  
+    // Check if all entries have completed their branched questions dynamically
+    if (config?.branchable) {
+      const remainingQuestions = questions.length - currentQuestionIndex - 1;
+      const incompleteEntries = [];
+  
+      for (const entry of entries) {
+        try {
+          const { data: { user } } = await supabase.auth.getUser();
+          if (!user) throw new Error("User not authenticated");
+  
+          const { isComplete } = await getBranchAnswers(
+            user.id,
+            currentQuestion.id,
+            entry.id,
+            remainingQuestions
+          );
+  
+          if (!isComplete) {
+            incompleteEntries.push(entry);
+          }
+        } catch (error) {
+          console.error(`Error checking branch status for entry ${entry.id}:`, error);
           toast({
-            title: "Incomplete Entries",
-            description: `Please complete the questions for ${incompleteEntries.length} entries`,
+            title: "Error",
+            description: `Failed to check branch status for entry ${entry.id}`,
             variant: "destructive",
           });
           return;
         }
-    
-        // If all entries are complete and this is a branchable repeater, end the questionnaire
-        setIsCompleted(true);
-        setCurrentQuestionIndex(-1);
-        return;
       }
-    
-      // Validate minimum entries
-      if (config?.minEntries && entries.length < config.minEntries) {
+  
+      if (incompleteEntries.length > 0) {
         toast({
-          title: "Validation Error",
-          description: `Please add at least ${config.minEntries} entries`,
+          title: "Incomplete Entries",
+          description: `Please complete the questions for ${incompleteEntries.length} entries`,
           variant: "destructive",
         });
         return;
       }
-    
-      // Validate required fields
-      const hasInvalidEntries = entries.some((entry) => {
-        return config?.fields.some((field) => {
-          if (field.required) {
-            const value = entry.values[field.id];
-            return !value || (Array.isArray(value) && value.length === 0);
-          }
-          return false;
-        });
-      });
-    
-      if (hasInvalidEntries) {
-        toast({
-          title: "Validation Error",
-          description: "Please fill in all required fields",
-          variant: "destructive",
-        });
-        return;
-      }
+  
+      // If all entries are complete and this is a branchable repeater, end the questionnaire
+      setIsCompleted(true);
+      setCurrentQuestionIndex(-1);
+      return;
     }
+  
+    // Validate minimum entries
+    if (config?.minEntries && entries.length < config.minEntries) {
+      toast({
+        title: "Validation Error",
+        description: `Please add at least ${config.minEntries} entries`,
+        variant: "destructive",
+      });
+      return;
+    }
+  
+    // Validate required fields
+    const hasInvalidEntries = entries.some((entry) => {
+      return config?.fields.some((field) => {
+        if (field.required) {
+          const value = entry.values[field.id];
+          return !value || (Array.isArray(value) && value.length === 0);
+        }
+        return false;
+      });
+    });
+  
+    if (hasInvalidEntries) {
+      toast({
+        title: "Validation Error",
+        description: "Please fill in all required fields",
+        variant: "destructive",
+      });
+      return;
+    }
+  }
 
   
     // Store the current answer

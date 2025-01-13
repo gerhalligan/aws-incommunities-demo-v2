@@ -7,6 +7,37 @@ import { generatePDF } from '@/services/pdf';
 import { AnswerDisplay } from "./AnswerDisplay";
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { FileMetadata } from '@/types/files';
+
+interface SupabaseQuestionAnswer {
+  id: string;
+  user_id: string;
+  question_id: number;
+  answer: {
+    value?: string;
+    optionId?: string;
+    aiAnalysis?: string;
+    files?: FileMetadata[];
+    formData?: Record<string, string>;
+    buttonResponses?: Record<string, string>;
+  };
+  parent_repeater_id?: number;
+  branch_entry_id?: string;
+  branch_entry_index?: number;
+  created_at: string;
+  updated_at: string;
+}
+
+interface BranchableRepeaterProps {
+  question: Question;
+  questions: Question[];
+  answers: Map<number, any[]>;
+}
+
+interface QuizSummaryProps {
+  questions: Question[];
+  onRestart: () => void;
+}
 
 /*******************************************************
  * Minimal Tabs / TabList / TabPanels / TabPanel 
@@ -37,10 +68,19 @@ function TabPanel({ children }: any) {
   return <div className="mt-3">{children}</div>;
 }
 
-interface QuizSummaryProps {
-  questions: Question[];
-  onRestart: () => void;
-}
+const formatValue = (value: unknown): string => {
+  if (Array.isArray(value)) {
+    return value.join(', ');
+  }
+  if (typeof value === 'string') {
+    return value;
+  }
+  if (value === null || value === undefined) {
+    return '';
+  }
+  return String(value);
+};
+
 
 export const QuizSummary = ({ questions, onRestart }: QuizSummaryProps) => {
   const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
@@ -59,7 +99,7 @@ export const QuizSummary = ({ questions, onRestart }: QuizSummaryProps) => {
         }
 
         // Fetch all answers for this user
-        const { data: answerData, error } = await supabase
+        const { data, error } = await supabase
           .from('question_answers')
           .select('*')
           .eq('user_id', user.id)
@@ -72,7 +112,7 @@ export const QuizSummary = ({ questions, onRestart }: QuizSummaryProps) => {
 
         // Create a new map with the answers, merging in branching info
         const answersMap = new Map();
-        answerData?.forEach((row) => {
+        (data as unknown as SupabaseQuestionAnswer[])?.forEach((row) => {
           if (row?.answer) {
             const extendedAnswer = {
               ...row.answer,
@@ -304,7 +344,7 @@ export function BranchableRepeater({
                           <span className="font-medium">
                             {fieldDef?.label}:
                           </span>{" "}
-                          {value}
+                          {formatValue(value)}
                         </div>
                       );
                     })}

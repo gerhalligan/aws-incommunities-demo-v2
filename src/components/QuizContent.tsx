@@ -10,6 +10,7 @@ import { generateAIResponse } from "@/services/ai";
 import { toast } from "sonner";
 import { ArrowLeft } from "lucide-react";
 import { Button } from "./ui/button";
+import { RepeaterBranch } from "@/types/quiz";
 
 interface ReturnToRepeaterProps {
   onReturn: () => void;
@@ -27,8 +28,8 @@ const BranchHeader = ({ entryValues, parentQuestion, currentBranch }: BranchHead
   
   console.log('BranchHeader.parentQuestion', parentQuestion);
 
-  const fields = parentQuestion?.repeaterConfig?.fields || [];
-  const entryNumber = currentBranch?.entryIndex || null;
+  //onst fields = parentQuestion?.repeaterConfig?.fields || [];
+  //const entryNumber = currentBranch?.entryIndex || null;
 
   return (
     <div></div>
@@ -76,11 +77,14 @@ interface QuizContentProps {
   onOptionSelect: (option: Option) => void;
   onRemoveOption: (option: Option) => void;
   onSearchQueryChange: (query: string) => void;
-  onInputSubmit: (value: string) => void;
+  onInputSubmit: (value: string, branchContext?: {
+    parentQuestionId: number;
+    entryId: string;
+    entryIndex: number;
+  }) => void;
   onFileUpload: (files: File[], index: number) => void;
   getFilteredOptions: () => Option[];
   initialInputValue: string;
-  storedAiAnalysis?: string;
   answers: Map<number, string | Option>;
   onFormDataChange?: (formData: Record<string, string>[]) => void;
   onReturn: () => void;
@@ -110,7 +114,6 @@ export const QuizContent = ({
   onFileUpload,
   getFilteredOptions,
   initialInputValue,
-  storedAiAnalysis,
   answers,
   onFormDataChange,
   onReturn,
@@ -121,7 +124,9 @@ export const QuizContent = ({
   handleBack,
   isLastBranchQuestion,
   currentQuestionIndex,
-  questionHistory
+  questionHistory,
+  aiAnalysis,
+  setAiAnalysis
 }: QuizContentProps) => {
   
   const [aiResponse, setAiResponse] = useState("");
@@ -133,6 +138,13 @@ export const QuizContent = ({
     setInputValue(initialInputValue);
   }, [initialInputValue]);
 
+   const branchContext = currentBranch
+    ? {
+        parentQuestionId: currentBranch.parentQuestion?.id,
+        entryId: currentBranch.entryId,
+        entryIndex: currentBranch.entryIndex,
+      }
+    : undefined;
   
 
   const generateResponse = async (answer: string, buttonId?: string) => {
@@ -149,13 +161,6 @@ export const QuizContent = ({
         }
         prompt = prompt.replace("{{question}}", currentQuestion.question);
         prompt = prompt.replace("{{answer}}", answer);
-
-        // Create branch context if we're in a branch
-        const branchContext = currentBranch ? {
-          parentQuestionId: currentBranch.parentQuestion.id,
-          entryId: currentBranch.entryId,
-          entryIndex: currentBranch.entryIndex
-        } : undefined;
   
         const response = await generateAIResponse(
           prompt, 
@@ -265,18 +270,21 @@ export const QuizContent = ({
             isLoading={isGeneratingResponse}
             response={aiResponse}
             onResponseChange={setAiResponse}
-            storedAnalysis={storedAiAnalysis}
+            branchContext={branchContext}
             question={currentQuestion}
             onAILookup={generateResponse}
-            inputValue={inputValue}
-            buttonResponses={answers.get(currentQuestion.id)?.buttonResponses || {}}
+            inputValue={inputValue}        
           />
         )}
          {currentView !== "admin" && currentQuestion.fileUploadMetadata?.enabled && (
           <FileUpload
             question={currentQuestion}
             onFileChange={onFileUpload}
-            initialFiles={answers.get(currentQuestion.id)?.files}
+            initialFiles={
+              typeof answers.get(currentQuestion.id) === 'object'
+                ? (answers.get(currentQuestion.id) as Option).files
+                : undefined
+            }
             onFormChange={handleFormDataChange}
           />
         )}
@@ -312,7 +320,11 @@ export const QuizContent = ({
           <FileUpload
             question={currentQuestion}
             onFileChange={onFileUpload}
-            initialFiles={answers.get(currentQuestion.id)?.files}
+            initialFiles={
+              typeof answers.get(currentQuestion.id) === 'object'
+                ? (answers.get(currentQuestion.id) as Option).files
+                : undefined
+            }
             onFormChange={handleFormDataChange}
           />
 
@@ -322,11 +334,10 @@ export const QuizContent = ({
               isLoading={isGeneratingResponse}
               response={aiResponse}
               onResponseChange={setAiResponse}
-              storedAnalysis={storedAiAnalysis} 
+              branchContext={branchContext} 
               question={currentQuestion}
               onAILookup={generateResponse}
               inputValue={inputValue}
-              buttonResponses={answers.get(currentQuestion.id)?.buttonResponses || {}}
             />
           )}
 
