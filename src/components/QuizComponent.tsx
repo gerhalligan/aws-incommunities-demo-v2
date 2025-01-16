@@ -7,7 +7,7 @@ import { NextButton } from "./NextButton";
 import { QuizContent } from "./QuizContent";
 import { QuestionEditor } from "./QuestionEditor";
 import { ProgressBar } from "./ProgressBar";
-import { QuizSummary } from "./QuizSummary";
+import ReportDashboard from "./Reports/pages/ReportDashboard";
 import { toast } from "sonner";
 import { uploadFile } from "@/services/files";
 import { saveAnswer } from "@/services/answers";
@@ -140,16 +140,7 @@ export const QuizComponent = () => {
               }`}
             >
               {isCompleted ? (
-                <QuizSummary
-                  questions={questions}
-                  onRestart={() => {
-                    setIsCompleted(false);
-                    setCurrentQuestionIndex(0);
-                    setAnswers(new Map());
-                    questionHistory.length = 0;
-                    questionHistory.push(0);
-                  }}
-                />
+                <ReportDashboard />
               ) : (
                 <>
               {currentView === "user" && (

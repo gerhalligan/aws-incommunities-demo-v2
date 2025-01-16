@@ -77,6 +77,10 @@ export const Header = () => {
             <MenubarMenu>
               <MenubarTrigger className="font-medium">Settings</MenubarTrigger>
               <MenubarContent>
+                <MenubarItem className="cursor-pointer" onClick={() => navigate("/reports")}>
+                  <FileText className="mr-2 h-4 w-4" />
+                  <span>Reports</span>
+                </MenubarItem>
                 <MenubarItem className="cursor-pointer" onClick={() => navigate("/documentation")}>
                   <Book className="mr-2 h-4 w-4" />
                   <span>Documentation</span>

@@ -12,6 +12,7 @@ import Settings from "./pages/Settings";
 import Login from "./pages/Login";
 import Profile from "./pages/Profile";
 import Documentation from "./pages/Documentation";
+import Reports from "./components/Reports/pages/ReportDashboard";
 import { DashboardRoutes } from "./components/Dashboard/DashboardDemo";
 
 const queryClient = new QueryClient();
@@ -82,6 +83,7 @@ const App = () => (
                 </ProtectedRoute>
               }
             />
+            <Route path="/reports" element={<Reports />} />
           </Routes>
         </BrowserRouter>
       </ViewProvider>

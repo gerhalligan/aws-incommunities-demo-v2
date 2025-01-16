@@ -176,8 +176,13 @@ export const saveAnswer = async (
     console.log("saveAnswer called with:", { questionId, answer, aiAnalysis, updateAIOnly, branchContext });
 
     // Fetch existing answer and its question details
-    const existingAnswer = await getAnswer(user.id, questionId, branchContext);
-    const question = existingAnswer?.question;
+    const answerObject = await getAnswer(user.id, questionId, branchContext);
+    const question = answerObject?.question;
+    let existingAnswer = null; // Initialize with null
+    
+    if(answerObject._isStoredAnswer){
+      existingAnswer = answerObject;
+    }
 
     if (!question) {
       console.error(`Question not found in existing answer for ID: ${questionId}`);
