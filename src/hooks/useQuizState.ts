@@ -25,6 +25,9 @@ export const useQuizState = () => {
   const [currentBranch, setCurrentBranch] = useState<RepeaterBranch | null>(null);
   const [repeaterBranches, setRepeaterBranches] = useState<Map<number, RepeaterBranch[]>>(new Map());
   const [aiAnalysis, setAiAnalysis] = useState<string>("");
+  const [selectedApplicationId, setSelectedApplicationId] = useState<string | null>(
+    localStorage.getItem('selected_application_id')
+  );
 
 
   const checkIsLastBranchQuestion = (question: Question): boolean => {
@@ -170,6 +173,40 @@ export const useQuizState = () => {
         }
         setQuestions(loadedQuestions);
         
+        // If viewing an existing application, load its answers
+        if (selectedApplicationId) {
+          const { data: { user } } = await supabase.auth.getUser();
+          if (!user) return;
+
+          const { data: applicationAnswers, error } = await supabase
+            .from('question_answers')
+            .select('*')
+            .eq('user_id', user.id)
+            .eq('id', selectedApplicationId)
+            .single();
+
+          if (error) {
+            console.error('Error loading application:', error);
+            return;
+          }
+
+          // Get all answers from the same timestamp
+          const { data: allAnswers } = await supabase
+            .from('question_answers')
+            .select('*')
+            .eq('user_id', user.id)
+            .eq('created_at', applicationAnswers.created_at);
+
+          if (allAnswers) {
+            const answersMap = new Map();
+            allAnswers.forEach(answer => {
+              answersMap.set(answer.question_id, answer.answer);
+            });
+            setAnswers(answersMap);
+            setIsCompleted(true);
+          }
+        }
+
         // Check for forced completion state
         const forceComplete = window.localStorage.getItem("force_quiz_complete");
         if (forceComplete === "true") {
@@ -188,7 +225,7 @@ export const useQuizState = () => {
     };
 
     loadState();
-  }, []);
+  }, [selectedApplicationId]);
   
 useEffect(() => {
   const loadAnswer = async () => {

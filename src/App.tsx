@@ -7,6 +7,7 @@ import { ViewProvider } from "./contexts/ViewContext";
 import { useEffect, useState } from "react";
 import { supabase } from "./integrations/supabase/client";
 import Home from "./pages/Home";
+import Applications from "./pages/Applications";
 import Index from "./pages/Index";
 import Settings from "./pages/Settings";
 import Login from "./pages/Login";
@@ -83,6 +84,7 @@ const App = () => (
                 </ProtectedRoute>
               }
             />
+            <Route path="/applications" element={<Applications />} />
             <Route path="/reports" element={<Reports />} />
           </Routes>
         </BrowserRouter>

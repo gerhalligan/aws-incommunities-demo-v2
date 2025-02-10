@@ -5,7 +5,7 @@ import {
   MenubarMenu,
   MenubarTrigger,
 } from "@/components/ui/menubar";
-import { Key, LogOut, Settings, User, Users, Book, UserCircle, Home, FileText } from "lucide-react";
+import { Key, LogOut, Settings, User, Users, Book, UserCircle, Home, FileText, FolderOpen } from "lucide-react";
 import { useView } from "@/contexts/ViewContext";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -70,6 +70,26 @@ export const Header = () => {
                 <MenubarItem className="cursor-pointer" onClick={handleLogout}>
                   <LogOut className="mr-2 h-4 w-4" />
                   <span>Logout</span>
+                </MenubarItem>
+              </MenubarContent>
+            </MenubarMenu>
+
+            <MenubarMenu>
+              <MenubarTrigger className="font-medium">Applications</MenubarTrigger>
+              <MenubarContent>
+                <MenubarItem className="cursor-pointer" onClick={() => navigate("/applications")}>
+                  <FolderOpen className="mr-2 h-4 w-4" />
+                  <span>View Applications</span>
+                </MenubarItem>
+                <MenubarItem 
+                  className="cursor-pointer" 
+                  onClick={() => {
+                    localStorage.removeItem('selected_application_id');
+                    navigate("/questionnaire");
+                  }}
+                >
+                  <FileText className="mr-2 h-4 w-4" />
+                  <span>New Application</span>
                 </MenubarItem>
               </MenubarContent>
             </MenubarMenu>

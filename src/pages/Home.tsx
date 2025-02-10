@@ -10,7 +10,8 @@ const Home = () => {
   const navigate = useNavigate();
   const { setCurrentView } = useView();
 
-  const handleStartAssessment = () => {
+  const handleNewApplication = () => {
+    localStorage.removeItem('selected_application_id');
     setCurrentView("user");
     navigate("/questionnaire");
   };
@@ -38,10 +39,10 @@ const Home = () => {
                 <div className="flex flex-wrap gap-4 animate-fade-in [animation-delay:400ms]">
                   <Button 
                     size="lg"
-                    onClick={handleStartAssessment}
+                    onClick={handleNewApplication}
                     className="bg-white text-primary hover:bg-white/90"
                   >
-                    Start Application
+                    New Application
                     <ArrowRight className="ml-2 h-5 w-5" />
                   </Button>
                   <Button 
@@ -78,9 +79,9 @@ const Home = () => {
                   <Button 
                     variant="outline" 
                     className="w-full"
-                    onClick={handleStartAssessment}
+                    onClick={handleNewApplication}
                   >
-                    Start Application
+                    New Application
                     <ArrowRight className="w-4 h-4 ml-2" />
                   </Button>
                 </div>

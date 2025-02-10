@@ -1,7 +1,36 @@
+import { useEffect, useState } from "react";
 import { QuizComponent } from "@/components/QuizComponent";
 import { Layout } from "@/components/Layout";
+import { supabase } from "@/integrations/supabase/client";
+import { format } from "date-fns";
 
 const Index = () => {
+  const [applicationDate, setApplicationDate] = useState<string | null>(null);
+  const selectedApplicationId = localStorage.getItem('selected_application_id');
+
+  useEffect(() => {
+    const loadApplicationDate = async () => {
+      if (!selectedApplicationId) return;
+
+      const { data, error } = await supabase
+        .from('question_answers')
+        .select('created_at')
+        .eq('id', selectedApplicationId)
+        .single();
+
+      if (error) {
+        console.error('Error loading application date:', error);
+        return;
+      }
+
+      if (data) {
+        setApplicationDate(format(new Date(data.created_at), 'MMMM d, yyyy'));
+      }
+    };
+
+    loadApplicationDate();
+  }, [selectedApplicationId]);
+
   return (
     <Layout>
       <div className="flex flex-col">
@@ -18,11 +47,17 @@ const Index = () => {
               <div className="container mx-auto px-4">
                 <div className="max-w-3xl">
                   <h1 className="text-3xl md:text-4xl font-bold text-white mb-4">
-                    AZ Data Entry Module
+                    {selectedApplicationId ? 'View Application' : 'New Application'}
                   </h1>
-                  <p className="text-lg text-white/90">
-                    Complete this application to help us understand your infrastructure needs and requirements.
-                  </p>
+                  {applicationDate ? (
+                    <p className="text-lg text-white/90">
+                      Submitted on {applicationDate}
+                    </p>
+                  ) : (
+                    <p className="text-lg text-white/90">
+                      Complete this application to help us understand your infrastructure needs and requirements.
+                    </p>
+                  )}
                 </div>
               </div>
             </div>
