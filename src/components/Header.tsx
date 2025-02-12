@@ -13,6 +13,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
 import { useState, useEffect } from "react";
 
+
 const Header = () => {
   const { setCurrentView } = useView();
   const { clearAnswers } = useAnswers();
