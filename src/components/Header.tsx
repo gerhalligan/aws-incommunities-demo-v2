@@ -104,9 +104,7 @@ const Header = () => {
                   </MenubarItem>
                 </MenubarContent>
               </MenubarMenu>
-            ) : (
-              // For non-admin users, you can render the other menus as before.
-              <>
+            )}; 
                 <MenubarMenu>
                   <MenubarTrigger className="font-medium">Account</MenubarTrigger>
                   <MenubarContent>
@@ -188,8 +186,6 @@ const Header = () => {
                     </MenubarItem>
                   </MenubarContent>
                 </MenubarMenu>
-              </>
-            )}
           </Menubar>
 
           {/* You can similarly conditionally render the mobile menu */}
