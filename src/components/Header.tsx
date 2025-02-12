@@ -5,14 +5,24 @@ import {
   MenubarMenu,
   MenubarTrigger,
 } from "@/components/ui/menubar";
-import { Key, LogOut, Settings, User, Users, Book, UserCircle, Home, FileText, FolderOpen } from "lucide-react";
+import {
+  Key,
+  LogOut,
+  Settings,
+  User,
+  Users,
+  Book,
+  UserCircle,
+  Home,
+  FileText,
+  FolderOpen,
+} from "lucide-react";
 import { useView } from "@/contexts/ViewContext";
 import { useAnswers } from "@/contexts/AnswersContext";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
 import { useState, useEffect } from "react";
-
 
 const Header = () => {
   const { setCurrentView } = useView();
@@ -46,12 +56,12 @@ const Header = () => {
 
   const handleNewApplication = () => {
     // Clear selected application ID
-    localStorage.removeItem('selected_application_id');
+    localStorage.removeItem("selected_application_id");
     // Clear any existing answers
-    localStorage.removeItem('quiz_answers');
+    localStorage.removeItem("quiz_answers");
     // Generate new application ID
     const newApplicationId = crypto.randomUUID();
-    localStorage.setItem('current_application_id', newApplicationId);
+    localStorage.setItem("current_application_id", newApplicationId);
     setCurrentView("user");
     navigate("/questionnaire");
   };
@@ -62,7 +72,7 @@ const Header = () => {
     } catch (error) {
       console.error("Logout error:", error);
     } finally {
-      localStorage.removeItem('sb-mtpwbtkilrsmwsyyhqky-auth-token');
+      localStorage.removeItem("sb-mtpwbtkilrsmwsyyhqky-auth-token");
       navigate("/login");
     }
   };
@@ -80,9 +90,9 @@ const Header = () => {
             <span className="hidden md:inline-block">AWS InCommunities</span>
           </button>
 
-           {/* Main Navigation */}
+          {/* Main Navigation */}
           <Menubar className="hidden md:flex border-none">
-            {isAdmin ? (
+            {isAdmin && (
               // Only show the Change View menu if the user is an admin
               <MenubarMenu>
                 <MenubarTrigger className="font-medium">
@@ -105,91 +115,91 @@ const Header = () => {
                   </MenubarItem>
                 </MenubarContent>
               </MenubarMenu>
-            )}; 
-                <MenubarMenu>
-                  <MenubarTrigger className="font-medium">Account</MenubarTrigger>
-                  <MenubarContent>
-                    <MenubarItem
-                      className="cursor-pointer"
-                      onClick={() => navigate("/profile")}
-                    >
-                      <UserCircle className="mr-2 h-4 w-4" />
-                      <span>Profile</span>
-                    </MenubarItem>
-                    <MenubarItem
-                      className="cursor-pointer"
-                      onClick={handleLogout}
-                    >
-                      <LogOut className="mr-2 h-4 w-4" />
-                      <span>Logout</span>
-                    </MenubarItem>
-                  </MenubarContent>
-                </MenubarMenu>
+            )}
+            <MenubarMenu>
+              <MenubarTrigger className="font-medium">Account</MenubarTrigger>
+              <MenubarContent>
+                <MenubarItem
+                  className="cursor-pointer"
+                  onClick={() => navigate("/profile")}
+                >
+                  <UserCircle className="mr-2 h-4 w-4" />
+                  <span>Profile</span>
+                </MenubarItem>
+                <MenubarItem
+                  className="cursor-pointer"
+                  onClick={handleLogout}
+                >
+                  <LogOut className="mr-2 h-4 w-4" />
+                  <span>Logout</span>
+                </MenubarItem>
+              </MenubarContent>
+            </MenubarMenu>
 
-                <MenubarMenu>
-                  <MenubarTrigger className="font-medium">
-                    Applications
-                  </MenubarTrigger>
-                  <MenubarContent>
-                    <MenubarItem
-                      className="cursor-pointer"
-                      onClick={() => navigate("/applications")}
-                    >
-                      <FolderOpen className="mr-2 h-4 w-4" />
-                      <span>View Applications</span>
-                    </MenubarItem>
-                    <MenubarItem
-                      className="cursor-pointer"
-                      onClick={handleNewApplication}
-                    >
-                      <FileText className="mr-2 h-4 w-4" />
-                      <span>New Application</span>
-                    </MenubarItem>
-                  </MenubarContent>
-                </MenubarMenu>
+            <MenubarMenu>
+              <MenubarTrigger className="font-medium">
+                Applications
+              </MenubarTrigger>
+              <MenubarContent>
+                <MenubarItem
+                  className="cursor-pointer"
+                  onClick={() => navigate("/applications")}
+                >
+                  <FolderOpen className="mr-2 h-4 w-4" />
+                  <span>View Applications</span>
+                </MenubarItem>
+                <MenubarItem
+                  className="cursor-pointer"
+                  onClick={handleNewApplication}
+                >
+                  <FileText className="mr-2 h-4 w-4" />
+                  <span>New Application</span>
+                </MenubarItem>
+              </MenubarContent>
+            </MenubarMenu>
 
-                <MenubarMenu>
-                  <MenubarTrigger className="font-medium">Settings</MenubarTrigger>
-                  <MenubarContent>
-                    <MenubarItem
-                      className="cursor-pointer"
-                      onClick={() => navigate("/reports")}
-                    >
-                      <FileText className="mr-2 h-4 w-4" />
-                      <span>Reports</span>
-                    </MenubarItem>
-                    <MenubarItem
-                      className="cursor-pointer"
-                      onClick={() => navigate("/documentation")}
-                    >
-                      <Book className="mr-2 h-4 w-4" />
-                      <span>Documentation</span>
-                    </MenubarItem>
-                    <MenubarItem
-                      className="cursor-pointer"
-                      onClick={() => {
-                        setCurrentView("user");
-                        navigate("/questionnaire");
-                        // Force completion state
-                        window.localStorage.setItem("force_quiz_complete", "true");
-                        window.location.reload();
-                      }}
-                    >
-                      <FileText className="mr-2 h-4 w-4" />
-                      <span>Quiz Summary (Debug)</span>
-                    </MenubarItem>
-                    <MenubarItem
-                      className="cursor-pointer"
-                      onClick={() => navigate("/settings")}
-                    >
-                      <Key className="mr-2 h-4 w-4" />
-                      <span>API Keys</span>
-                    </MenubarItem>
-                  </MenubarContent>
-                </MenubarMenu>
+            <MenubarMenu>
+              <MenubarTrigger className="font-medium">Settings</MenubarTrigger>
+              <MenubarContent>
+                <MenubarItem
+                  className="cursor-pointer"
+                  onClick={() => navigate("/reports")}
+                >
+                  <FileText className="mr-2 h-4 w-4" />
+                  <span>Reports</span>
+                </MenubarItem>
+                <MenubarItem
+                  className="cursor-pointer"
+                  onClick={() => navigate("/documentation")}
+                >
+                  <Book className="mr-2 h-4 w-4" />
+                  <span>Documentation</span>
+                </MenubarItem>
+                <MenubarItem
+                  className="cursor-pointer"
+                  onClick={() => {
+                    setCurrentView("user");
+                    navigate("/questionnaire");
+                    // Force completion state
+                    window.localStorage.setItem("force_quiz_complete", "true");
+                    window.location.reload();
+                  }}
+                >
+                  <FileText className="mr-2 h-4 w-4" />
+                  <span>Quiz Summary (Debug)</span>
+                </MenubarItem>
+                <MenubarItem
+                  className="cursor-pointer"
+                  onClick={() => navigate("/settings")}
+                >
+                  <Key className="mr-2 h-4 w-4" />
+                  <span>API Keys</span>
+                </MenubarItem>
+              </MenubarContent>
+            </MenubarMenu>
           </Menubar>
 
-          {/* You can similarly conditionally render the mobile menu */}
+          {/* Mobile Menu */}
           <div className="flex md:hidden ml-auto">
             <Menubar className="border-none">
               <MenubarMenu>
@@ -197,7 +207,7 @@ const Header = () => {
                   <User className="h-5 w-5" />
                 </MenubarTrigger>
                 <MenubarContent>
-                  {isAdmin ? (
+                  {isAdmin && (
                     <>
                       <MenubarItem
                         className="cursor-pointer"
@@ -214,35 +224,35 @@ const Header = () => {
                         <span>App Admin View</span>
                       </MenubarItem>
                     </>
-                  )};
-                      <MenubarItem
-                        className="cursor-pointer"
-                        onClick={() => navigate("/documentation")}
-                      >
-                        <Book className="mr-2 h-4 w-4" />
-                        <span>Documentation</span>
-                      </MenubarItem>
-                      <MenubarItem
-                        className="cursor-pointer"
-                        onClick={() => navigate("/settings")}
-                      >
-                        <Settings className="mr-2 h-4 w-4" />
-                        <span>Settings</span>
-                      </MenubarItem>
-                      <MenubarItem
-                        className="cursor-pointer"
-                        onClick={() => navigate("/profile")}
-                      >
-                        <UserCircle className="mr-2 h-4 w-4" />
-                        <span>Profile</span>
-                      </MenubarItem>
-                      <MenubarItem
-                        className="cursor-pointer"
-                        onClick={handleLogout}
-                      >
-                        <LogOut className="mr-2 h-4 w-4" />
-                        <span>Logout</span>
-                      </MenubarItem>
+                  )}
+                  <MenubarItem
+                    className="cursor-pointer"
+                    onClick={() => navigate("/documentation")}
+                  >
+                    <Book className="mr-2 h-4 w-4" />
+                    <span>Documentation</span>
+                  </MenubarItem>
+                  <MenubarItem
+                    className="cursor-pointer"
+                    onClick={() => navigate("/settings")}
+                  >
+                    <Settings className="mr-2 h-4 w-4" />
+                    <span>Settings</span>
+                  </MenubarItem>
+                  <MenubarItem
+                    className="cursor-pointer"
+                    onClick={() => navigate("/profile")}
+                  >
+                    <UserCircle className="mr-2 h-4 w-4" />
+                    <span>Profile</span>
+                  </MenubarItem>
+                  <MenubarItem
+                    className="cursor-pointer"
+                    onClick={handleLogout}
+                  >
+                    <LogOut className="mr-2 h-4 w-4" />
+                    <span>Logout</span>
+                  </MenubarItem>
                 </MenubarContent>
               </MenubarMenu>
             </Menubar>
