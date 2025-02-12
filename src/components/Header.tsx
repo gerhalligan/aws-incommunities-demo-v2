@@ -213,8 +213,7 @@ const Header = () => {
                         <span>App Admin View</span>
                       </MenubarItem>
                     </>
-                  ) : (
-                    <>
+                  )};
                       <MenubarItem
                         className="cursor-pointer"
                         onClick={() => navigate("/documentation")}
@@ -243,8 +242,6 @@ const Header = () => {
                         <LogOut className="mr-2 h-4 w-4" />
                         <span>Logout</span>
                       </MenubarItem>
-                    </>
-                  )}
                 </MenubarContent>
               </MenubarMenu>
             </Menubar>
