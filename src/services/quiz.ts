@@ -1,12 +1,20 @@
-// src/services/quiz.ts
 import { supabase } from "@/integrations/supabase/client";
 import { Question } from "@/types/quiz";
+import { toast } from "@/hooks/use-toast";
 
+// Constants
 const QUESTIONS_TABLE = 'questions';
 
-export const loadQuizState = async (): Promise<Question[]> => {
+const loadQuizState = async (): Promise<Question[]> => {
   const { data: { user } } = await supabase.auth.getUser();
-  if (!user) throw new Error("User not authenticated");
+  if (!user) {
+    toast({
+      title: "Authentication Required",
+      description: "Please sign in to continue",
+      variant: "destructive"
+    });
+    throw new Error("User not authenticated");
+  }
 
   const { data, error } = await supabase
     .from(QUESTIONS_TABLE)
@@ -15,6 +23,11 @@ export const loadQuizState = async (): Promise<Question[]> => {
 
   if (error) {
     console.error("Error loading questions:", error);
+    toast({
+      title: "Error",
+      description: "Failed to load questions. Please try again later.",
+      variant: "destructive"
+    });
     return [];
   }
 
@@ -23,6 +36,7 @@ export const loadQuizState = async (): Promise<Question[]> => {
     id: question.id,
     question: question.question,
     type: question.type,
+    dependsOn: question.depends_on,
     options: question.options || [],
     defaultNextQuestionId: question.default_next_question_id,
     fileUploadMetadata: question.file_upload_metadata,
@@ -32,9 +46,16 @@ export const loadQuizState = async (): Promise<Question[]> => {
   }));
 };
 
-export const saveQuizState = async (questions: Question[]): Promise<void> => {
+const saveQuizState = async (questions: Question[]): Promise<void> => {
   const { data: { user } } = await supabase.auth.getUser();
-  if (!user) throw new Error("User not authenticated");
+  if (!user) {
+    toast({
+      title: "Authentication Required",
+      description: "Please sign in to continue",
+      variant: "destructive"
+    });
+    throw new Error("User not authenticated");
+  }
 
   // Get user role
   const { data: profile } = await supabase
@@ -44,7 +65,12 @@ export const saveQuizState = async (questions: Question[]): Promise<void> => {
     .single();
 
   if (!profile || profile.role !== 'admin') {
-    throw new Error("Only admins can modify questions");
+    toast({
+      title: "Permission Denied",
+      description: "You don't have permission to modify questions. Please contact an administrator.",
+      variant: "destructive"
+    });
+    throw new Error("Insufficient permissions");
   }
 
   // Update each question individually
@@ -55,6 +81,7 @@ export const saveQuizState = async (questions: Question[]): Promise<void> => {
         id: question.id,
         question: question.question,
         type: question.type,
+        depends_on: question.dependsOn,
         options: question.options,
         default_next_question_id: question.defaultNextQuestionId,
         file_upload_metadata: question.fileUploadMetadata,
@@ -63,6 +90,22 @@ export const saveQuizState = async (questions: Question[]): Promise<void> => {
         repeater_config: question.repeaterConfig
       });
 
-    if (error) throw error;
+    if (error) {
+      console.error("Error saving question:", error);
+      toast({
+        title: "Error",
+        description: "Failed to save changes. Please try again later.",
+        variant: "destructive"
+      });
+      throw error;
+    }
   }
+  
+  toast({
+    title: "Success",
+    description: "Changes saved successfully"
+  });
 };
+
+
+export { loadQuizState, saveQuizState }

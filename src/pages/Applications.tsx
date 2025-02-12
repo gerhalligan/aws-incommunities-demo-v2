@@ -13,8 +13,19 @@ import {
 } from "@/components/ui/table";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { FileText, Plus, Search, Calendar, MapPin } from "lucide-react";
+import { FileText, Plus, Search, Calendar, MapPin, Trash2 } from "lucide-react";
 import { format } from "date-fns";
+import { toast } from "sonner";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 interface Application {
   id: string;
@@ -28,6 +39,7 @@ const Applications = () => {
   const [applications, setApplications] = useState<Application[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
+  const [applicationToDelete, setApplicationToDelete] = useState<Application | null>(null);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -39,43 +51,48 @@ const Applications = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      // Get all unique application IDs based on first question (Region)
+      // Get all answers for the first three questions (Region, Cluster, Infrastructure Type)
       const { data: answers, error } = await supabase
         .from('question_answers')
         .select('*')
         .eq('user_id', user.id)
-        .eq('question_id', 1) // Region question
+        .in('question_id', [1, 2, 3]) // Region, Cluster, Infrastructure Type
         .is('parent_repeater_id', null)
         .is('branch_entry_id', null)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
 
-      // For each application, get the key answers
-      const applications = await Promise.all(
-        answers.map(async (answer) => {
-          // Get cluster name (Q2) and infrastructure type (Q3) for this application
-          const { data: relatedAnswers } = await supabase
-            .from('question_answers')
-            .select('*')
-            .eq('user_id', user.id)
-            .in('question_id', [2, 3]) // Cluster and Infrastructure Type
-            .eq('created_at', answer.created_at)
-            .is('parent_repeater_id', null)
-            .is('branch_entry_id', null);
-
-          const clusterAnswer = relatedAnswers?.find(a => a.question_id === 2);
-          const infraAnswer = relatedAnswers?.find(a => a.question_id === 3);
-
-          return {
+      // Group answers by created_at timestamp
+      const groupedAnswers = answers.reduce((acc, answer) => {
+        const timestamp = answer.created_at;
+        if (!acc[timestamp]) {
+          acc[timestamp] = {
             id: answer.id,
             created_at: answer.created_at,
-            region: answer.answer.value || answer.answer.text || 'N/A',
-            cluster: clusterAnswer?.answer.value || clusterAnswer?.answer.text || 'N/A',
-            infrastructure_type: infraAnswer?.answer.value || infraAnswer?.answer.text || 'N/A'
+            region: '',
+            cluster: '',
+            infrastructure_type: ''
           };
-        })
-      );
+        }
+        
+        // Map question_id to the corresponding field
+        switch (answer.question_id) {
+          case 1: // Region
+            acc[timestamp].region = answer.answer.value || answer.answer.text || 'N/A';
+            break;
+          case 2: // Cluster
+            acc[timestamp].cluster = answer.answer.value || answer.answer.text || 'N/A';
+            break;
+          case 3: // Infrastructure Type
+            acc[timestamp].infrastructure_type = answer.answer.value || answer.answer.text || 'N/A';
+            break;
+        }
+        return acc;
+      }, {});
+
+      // Convert grouped answers to array
+      const applications = Object.values(groupedAnswers);
 
       setApplications(applications);
     } catch (error) {
@@ -95,6 +112,44 @@ const Applications = () => {
     // Store the application ID in localStorage
     localStorage.setItem('selected_application_id', applicationId);
     navigate('/questionnaire');
+  };
+
+  const handleDeleteApplication = async () => {
+    if (!applicationToDelete) return;
+
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      // Get the timestamp of the application to delete
+      const { data: targetAnswer } = await supabase
+        .from('question_answers')
+        .select('created_at')
+        .eq('id', applicationToDelete.id)
+        .single();
+
+      if (!targetAnswer) {
+        throw new Error('Application not found');
+      }
+
+      // Delete all answers from the same timestamp
+      const { error } = await supabase
+        .from('question_answers')
+        .delete()
+        .eq('user_id', user.id)
+        .eq('created_at', targetAnswer.created_at);
+
+      if (error) throw error;
+
+      // Update local state
+      setApplications(apps => apps.filter(app => app.id !== applicationToDelete.id));
+      toast.success("Application deleted successfully");
+    } catch (error) {
+      console.error('Error deleting application:', error);
+      toast.error("Failed to delete application");
+    } finally {
+      setApplicationToDelete(null);
+    }
   };
 
   return (
@@ -167,15 +222,25 @@ const Applications = () => {
                         <TableCell>{app.cluster}</TableCell>
                         <TableCell>{app.infrastructure_type}</TableCell>
                         <TableCell className="text-right">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleViewApplication(app.id)}
-                            className="opacity-0 group-hover:opacity-100 transition-opacity"
-                          >
-                            <FileText className="w-4 h-4 mr-2" />
-                            View
-                          </Button>
+                          <div className="flex justify-end gap-2">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleViewApplication(app.id)}
+                              className="opacity-0 group-hover:opacity-100 transition-opacity"
+                            >
+                              <FileText className="w-4 h-4 mr-2" />
+                              View
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => setApplicationToDelete(app)}
+                              className="opacity-0 group-hover:opacity-100 transition-opacity text-red-600 hover:text-red-700 hover:bg-red-50"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                          </div>
                         </TableCell>
                       </TableRow>
                     ))}
@@ -203,6 +268,27 @@ const Applications = () => {
             )}
           </Card>
         </div>
+
+        {/* Delete Confirmation Dialog */}
+        <AlertDialog open={!!applicationToDelete} onOpenChange={() => setApplicationToDelete(null)}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Delete Application</AlertDialogTitle>
+              <AlertDialogDescription>
+                Are you sure you want to delete this application? This action cannot be undone.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={handleDeleteApplication}
+                className="bg-red-600 hover:bg-red-700 text-white"
+              >
+                Delete
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
     </Layout>
   );

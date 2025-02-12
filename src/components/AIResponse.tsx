@@ -18,7 +18,7 @@ interface AIResponseProps {
   inputValue?: string;
 }
 
-export const AIResponse = ({
+const AIResponse = ({
   isLoading,
   response,
   onResponseChange,
@@ -95,29 +95,31 @@ export const AIResponse = ({
         <div>
           {question?.aiLookup?.buttons?.length > 0 && (
             <div className="flex gap-2 mt-4 mb-4 border-t pt-4">
-              {question.aiLookup.buttons
-                .filter((button) => button.enabled)
-                .map((button) => (
-                  <Button
-                    key={button.id}
-                    variant={selectedButtonId === button.id ? "default" : "outline"}
-                    onClick={() => {
-                      if (selectedButtonId === button.id) {
-                        setSelectedButtonId(null); // Deselect if already selected
-                      } else {
-                        setSelectedButtonId(button.id);
-                        if (!storedAnalysis?.buttonResponses?.[button.id]) {
-                          onAILookup?.(inputValue || "", button.id);
+              <div className="flex flex-wrap gap-2">
+                {question.aiLookup.buttons
+                  .filter((button) => button.enabled)
+                  .map((button) => (
+                    <Button
+                      key={button.id}
+                      variant={selectedButtonId === button.id ? "default" : "outline"}
+                      onClick={() => {
+                        if (selectedButtonId === button.id) {
+                          setSelectedButtonId(null); // Deselect if already selected
+                        } else {
+                          setSelectedButtonId(button.id);
+                          if (!storedAnalysis?.buttonResponses?.[button.id]) {
+                            onAILookup?.(inputValue || "", button.id);
+                          }
                         }
-                      }
-                    }}
-                    className="shrink-0"
-                    disabled={isLoading || !inputValue}
-                  >
-                    <Wand2 className="w-4 h-4 mr-2" />
-                    {button.label}
-                  </Button>
-                ))}
+                      }}
+                      className="shrink-0 whitespace-nowrap"
+                      disabled={isLoading || !inputValue}
+                    >
+                      <Wand2 className="w-4 h-4 mr-2" />
+                      {button.label}
+                    </Button>
+                  ))}
+              </div>
             </div>
           )}
           <div className="p-4 bg-gray-50 border rounded-md">
@@ -136,3 +138,5 @@ export const AIResponse = ({
     </Card>
   );
 };
+
+export { AIResponse };

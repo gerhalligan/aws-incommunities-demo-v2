@@ -99,18 +99,19 @@ export const DependencyEditor = ({ question, questions, onUpdate, className = ""
   };
 
   const handleAddDependency = (dependentQuestionId: number) => {
+    if (!question.dependsOn) {
+      question.dependsOn = [];
+    }
     const updatedDependencies = [
       ...(question.dependsOn || []),
       { questionId: dependentQuestionId, options: [] }
     ];
-    setHasUnsavedChanges(true);
-    onUpdate({ dependsOn: updatedDependencies });
+    handleSave({ dependsOn: updatedDependencies });
   };
 
   const handleRemoveDependency = (questionId: number) => {
     const updatedDependencies = question.dependsOn?.filter(dep => dep.questionId !== questionId) || [];
-    setHasUnsavedChanges(true);
-    onUpdate({ dependsOn: updatedDependencies });
+    handleSave({ dependsOn: updatedDependencies });
   };
 
   const handleOptionDependencyChange = (questionId: number, optionId: string, isSelected: boolean) => {
@@ -125,14 +126,12 @@ export const DependencyEditor = ({ question, questions, onUpdate, className = ""
       }
       return dep;
     }) || [];
-    setHasUnsavedChanges(true);
-    onUpdate({ dependsOn: updatedDependencies });
+    handleSave({ dependsOn: updatedDependencies });
   };
 
-  const handleSave = () => {
+  const handleSave = (updates: Partial<Question>) => {
     onUpdate({
-      dependsOn: question.dependsOn,
-      options: question.options
+      ...updates
     });
     setHasUnsavedChanges(false);
   };
@@ -143,6 +142,7 @@ export const DependencyEditor = ({ question, questions, onUpdate, className = ""
         <div className="space-y-2">
           <Label>Add Dependency on Previous Question</Label>
           <Select
+            value={question.dependsOn?.[0]?.questionId?.toString() || ""}
             onValueChange={(value) => handleAddDependency(Number(value))}
           >
             <SelectTrigger className="w-full">

@@ -8,6 +8,8 @@ interface NextButtonProps {
   showBack?: boolean;
   isLastBranchQuestion?: boolean;
   isBranchableRepeater?: boolean;
+  setAiAnalysis?: (value: string) => void;
+  handleUpdateQuestion?: (updates: Partial<Question>) => void;
 }
 
 // In NextButton.tsx, modify the outer div's className to use justify-end when there's no back button

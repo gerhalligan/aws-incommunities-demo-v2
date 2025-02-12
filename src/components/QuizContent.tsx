@@ -99,6 +99,7 @@ interface QuizContentProps {
   isLastBranchQuestion: (question: Question) => boolean;
   aiAnalysis: string;
   setAiAnalysis: (value: string) => void;
+  handleUpdateQuestion: (updates: Partial<Question>) => void;
 }
 
 export const QuizContent = ({
@@ -126,7 +127,8 @@ export const QuizContent = ({
   currentQuestionIndex,
   questionHistory,
   aiAnalysis,
-  setAiAnalysis
+  setAiAnalysis,
+  handleUpdateQuestion
 }: QuizContentProps) => {
   
   const [aiResponse, setAiResponse] = useState("");
@@ -297,6 +299,18 @@ export const QuizContent = ({
       </div>
     );
   }
+  
+  const handleUpdateOption = (optionId: string, newText: string) => {
+    if (!handleUpdateQuestion) return;
+    
+    const updatedQuestion = {
+      ...currentQuestion,
+      options: currentQuestion.options.map(opt =>
+        opt.id === optionId ? { ...opt, text: newText } : opt
+      ),
+    };
+    handleUpdateQuestion(updatedQuestion);
+  };
 
   return (
     <div className="space-y-4">
@@ -313,6 +327,7 @@ export const QuizContent = ({
         selectedOption={selectedOption}
         onOptionSelect={handleOptionSelect}
         onRemoveOption={onRemoveOption}
+        onUpdateOption={currentView === "admin" ? handleUpdateOption : undefined}
         showRemoveButton={currentView === "admin"}
       />
       {currentView !== "admin" && (

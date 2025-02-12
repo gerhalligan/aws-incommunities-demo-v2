@@ -218,6 +218,7 @@ export const QuizComponent = () => {
                   onSearchQueryChange={setSearchQuery}
                   onInputSubmit={handleInputSubmit}
                   onFileUpload={handleFileUpload}
+                  handleUpdateQuestion={handleUpdateQuestion}
                   getFilteredOptions={getFilteredOptions}
                   initialInputValue={inputValue}
                   answers={answers}

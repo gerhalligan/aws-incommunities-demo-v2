@@ -20,6 +20,15 @@ export const Header = () => {
     navigate("/questionnaire");
   };
 
+  const handleNewApplication = () => {
+    // Clear selected application ID
+    localStorage.removeItem('selected_application_id');
+    // Switch to user view
+    setCurrentView("user");
+    // Navigate to questionnaire
+    navigate("/questionnaire");
+  };
+
   const handleLogout = async () => {
     try {
       await supabase.auth.signOut();
@@ -83,10 +92,7 @@ export const Header = () => {
                 </MenubarItem>
                 <MenubarItem 
                   className="cursor-pointer" 
-                  onClick={() => {
-                    localStorage.removeItem('selected_application_id');
-                    navigate("/questionnaire");
-                  }}
+                  onClick={handleNewApplication}
                 >
                   <FileText className="mr-2 h-4 w-4" />
                   <span>New Application</span>

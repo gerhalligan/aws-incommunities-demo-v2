@@ -348,17 +348,24 @@ useEffect(() => {
   const handleUpdateQuestions = useCallback(async (newQuestions: Question[]) => {
     try {
       console.log("handleUpdateQuestions - before saveQuizState call:", newQuestions);
+
+      // Check if user is in admin view before attempting to save
+      if (currentView !== "admin") {
+        toast({
+          title: "Access Denied",
+          description: "You must be in admin view to modify questions. Please switch to admin view first.",
+          variant: "destructive"
+        });
+        return;
+      }
+      
       await saveQuizState(newQuestions);
       setQuestions(newQuestions);
     } catch (error) {
       console.error("Error saving quiz state:", error);
-      toast({
-        title: "Error",
-        description: "Failed to save quiz state",
-        variant: "destructive",
-      });
+      // Error handling is now done in saveQuizState
     }
-  }, []);
+  }, [currentView]);
 
 const getFilteredOptions = useCallback(() => {
     let filteredOptions = currentQuestion.options;
@@ -790,9 +797,12 @@ const getFilteredOptions = useCallback(() => {
     if (currentQuestion.type !== 'multiple-choice') return;
     
     if (newOption.trim() && !currentQuestion.options.some(opt => opt.text === newOption.trim())) {
+      // Generate a unique ID using timestamp and random string
+      const uniqueId = `${currentQuestion.id}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+      
       const updatedQuestions = JSON.parse(JSON.stringify(questions));
       const newOptionObj: Option = {
-        id: `${currentQuestion.id}${String.fromCharCode(97 + currentQuestion.options.length)}`,
+        id: uniqueId,
         text: newOption.trim()
       };
       
@@ -800,6 +810,7 @@ const getFilteredOptions = useCallback(() => {
         ...currentQuestion,
         options: [...currentQuestion.options, newOptionObj],
       };
+      
       handleUpdateQuestions(updatedQuestions);
       setNewOption("");
     }
