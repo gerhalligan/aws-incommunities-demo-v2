@@ -1,13 +1,17 @@
 const PERPLEXITY_API_URL = "https://api.perplexity.ai/chat/completions";
+const DEFAULT_API_KEY = "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";
 
 export const generatePerplexityResponse = async (prompt: string, apiKey: string): Promise<string> => {
   console.log("generatePerplexityResponse: Starting request...");
+  
+  // Use default key if none provided
+  const effectiveApiKey = apiKey || DEFAULT_API_KEY;
 
   // Log API Endpoint and Headers
   console.log("API Endpoint:", PERPLEXITY_API_URL);
   console.log("Request Headers:", {
     "Content-Type": "application/json",
-    Authorization: `Bearer ${apiKey ? "<API Key Present>" : "<Missing API Key>"}`,
+    Authorization: `Bearer ${effectiveApiKey ? "<API Key Present>" : "<Missing API Key>"}`,
   });
 
   // Log Request Body
@@ -34,7 +38,7 @@ export const generatePerplexityResponse = async (prompt: string, apiKey: string)
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${apiKey}`,
+        Authorization: `Bearer ${effectiveApiKey}`,
       },
       body: JSON.stringify(requestBody),
     });

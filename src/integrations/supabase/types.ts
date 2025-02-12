@@ -51,6 +51,7 @@ export interface Database {
           id: string;
           user_id: string;
           question_id: number;
+          application_id: string;
           answer: Json;
           created_at: string | null;
           updated_at: string | null;
@@ -62,6 +63,7 @@ export interface Database {
           id?: string;
           user_id: string;
           question_id: number;
+          application_id: string;
           answer: Json;
           created_at?: string | null;
           updated_at?: string | null;
@@ -73,6 +75,7 @@ export interface Database {
           id?: string;
           user_id?: string;
           question_id?: number;
+          application_id?: string;
           answer?: Json;
           created_at?: string | null;
           updated_at?: string | null;

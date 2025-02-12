@@ -56,12 +56,9 @@ const Header = () => {
 
   const handleNewApplication = () => {
     // Clear selected application ID
-    localStorage.removeItem("selected_application_id");
+    localStorage.removeItem("application_id");
     // Clear any existing answers
     localStorage.removeItem("quiz_answers");
-    // Generate new application ID
-    const newApplicationId = crypto.randomUUID();
-    localStorage.setItem("current_application_id", newApplicationId);
     setCurrentView("user");
     navigate("/questionnaire");
   };
@@ -160,33 +157,13 @@ const Header = () => {
 
             <MenubarMenu>
               <MenubarTrigger className="font-medium">Settings</MenubarTrigger>
-              <MenubarContent>
-                <MenubarItem
-                  className="cursor-pointer"
-                  onClick={() => navigate("/reports")}
-                >
-                  <FileText className="mr-2 h-4 w-4" />
-                  <span>Reports</span>
-                </MenubarItem>
+              <MenubarContent>               
                 <MenubarItem
                   className="cursor-pointer"
                   onClick={() => navigate("/documentation")}
                 >
                   <Book className="mr-2 h-4 w-4" />
                   <span>Documentation</span>
-                </MenubarItem>
-                <MenubarItem
-                  className="cursor-pointer"
-                  onClick={() => {
-                    setCurrentView("user");
-                    navigate("/questionnaire");
-                    // Force completion state
-                    window.localStorage.setItem("force_quiz_complete", "true");
-                    window.location.reload();
-                  }}
-                >
-                  <FileText className="mr-2 h-4 w-4" />
-                  <span>Quiz Summary (Debug)</span>
                 </MenubarItem>
                 <MenubarItem
                   className="cursor-pointer"

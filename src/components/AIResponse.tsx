@@ -14,7 +14,7 @@ interface AIResponseProps {
   onResponseChange: (response: string) => void;
   question?: Question;
   branchContext?: string;
-  onAILookup?: (value: string, buttonId?: string) => void;
+  onAILookup?: (value: string, buttonId?: string, applicationId?: string) => void;
   inputValue?: string;
 }
 
@@ -31,6 +31,9 @@ const AIResponse = ({
   const [selectedButtonId, setSelectedButtonId] = useState<string | null>(null);
   const [storedAnalysis, setStoredAnalysis] = useState<any>(null);
 
+  // Get application ID once when component mounts
+  const applicationId = localStorage.getItem('application_id');
+
   useEffect(() => {
     const fetchExistingAnswer = async () => {
       try {
@@ -45,7 +48,17 @@ const AIResponse = ({
           return;
         }
 
-        const existingAnswer = await getAnswer(user.id, question.id, branchContext);
+        if (!applicationId) {
+          console.error("No application ID found");
+          return;
+        }
+
+        const existingAnswer = await getAnswer(
+          user.id,
+          question.id,
+          branchContext,
+          applicationId
+        );
         console.log("Existing answer fetched:", existingAnswer);
 
         setStoredAnalysis(existingAnswer?.aiAnalysis || null);
@@ -56,7 +69,7 @@ const AIResponse = ({
     };
 
     fetchExistingAnswer();
-  }, [question, branchContext, onResponseChange]);
+  }, [question, branchContext, onResponseChange, applicationId]);
 
   const currentResponse =
     selectedButtonId && storedAnalysis?.buttonResponses?.[selectedButtonId]
@@ -108,7 +121,7 @@ const AIResponse = ({
                         } else {
                           setSelectedButtonId(button.id);
                           if (!storedAnalysis?.buttonResponses?.[button.id]) {
-                            onAILookup?.(inputValue || "", button.id);
+                            onAILookup?.(inputValue || "", button.id, applicationId);
                           }
                         }
                       }}

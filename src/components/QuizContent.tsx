@@ -134,6 +134,7 @@ export const QuizContent = ({
   const [aiResponse, setAiResponse] = useState("");
   const [isGeneratingResponse, setIsGeneratingResponse] = useState(false);
   const [inputValue, setInputValue] = useState(initialInputValue);
+  const [currentApplicationId] = useState(localStorage.getItem('application_id'));
   const [currentFormData, setCurrentFormData] = useState<Record<string, string>[]>([]);
 
   useEffect(() => {
@@ -152,6 +153,14 @@ export const QuizContent = ({
   const generateResponse = async (answer: string, buttonId?: string) => {
     if (currentQuestion.aiLookup?.enabled && currentQuestion.aiLookup?.prompt) {
       setIsGeneratingResponse(true);
+
+      if (!currentApplicationId) {
+        console.error('No application ID available');
+        toast.error('Application ID not found');
+        setIsGeneratingResponse(false);
+        return;
+      }
+
       try {
         // Get the prompt based on whether a button was clicked
         let prompt;
@@ -164,13 +173,13 @@ export const QuizContent = ({
         prompt = prompt.replace("{{question}}", currentQuestion.question);
         prompt = prompt.replace("{{answer}}", answer);
   
-        const response = await generateAIResponse(
-          prompt, 
-          currentQuestion.id,
-          { value: answer },
+        const response = await generateAIResponse(prompt, {
+          questionId: currentQuestion.id,
+          currentAnswer: { value: answer },
           branchContext,
-          buttonId
-        );
+          buttonId,
+          applicationId: currentApplicationId
+        });
          // Only update aiResponse if this is not a button response
       
         setAiResponse(response);

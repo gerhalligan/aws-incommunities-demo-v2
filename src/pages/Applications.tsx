@@ -29,6 +29,7 @@ import {
 
 interface Application {
   id: string;
+  application_id: string;
   created_at: string;
   region: string;
   cluster: string;
@@ -54,7 +55,7 @@ const Applications = () => {
       // Get all answers for the first three questions (Region, Cluster, Infrastructure Type)
       const { data: answers, error } = await supabase
         .from('question_answers')
-        .select('*')
+        .select('application_id, created_at, answer, question_id')
         .eq('user_id', user.id)
         .in('question_id', [1, 2, 3]) // Region, Cluster, Infrastructure Type
         .is('parent_repeater_id', null)
@@ -64,11 +65,12 @@ const Applications = () => {
       if (error) throw error;
 
       // Group answers by created_at timestamp
-      const groupedAnswers = answers.reduce((acc, answer) => {
-        const timestamp = answer.created_at;
-        if (!acc[timestamp]) {
-          acc[timestamp] = {
-            id: answer.id,
+      const groupedAnswers = answers.reduce((acc, answer: any) => {
+        const appId = answer.application_id;
+        if (!acc[appId]) {
+          acc[appId] = {
+            id: answer.application_id,
+            application_id: answer.application_id,
             created_at: answer.created_at,
             region: '',
             cluster: '',
@@ -79,13 +81,13 @@ const Applications = () => {
         // Map question_id to the corresponding field
         switch (answer.question_id) {
           case 1: // Region
-            acc[timestamp].region = answer.answer.value || answer.answer.text || 'N/A';
+            acc[appId].region = answer.answer.value || answer.answer.text || 'N/A';
             break;
           case 2: // Cluster
-            acc[timestamp].cluster = answer.answer.value || answer.answer.text || 'N/A';
+            acc[appId].cluster = answer.answer.value || answer.answer.text || 'N/A';
             break;
           case 3: // Infrastructure Type
-            acc[timestamp].infrastructure_type = answer.answer.value || answer.answer.text || 'N/A';
+            acc[appId].infrastructure_type = answer.answer.value || answer.answer.text || 'N/A';
             break;
         }
         return acc;
@@ -110,7 +112,7 @@ const Applications = () => {
 
   const handleViewApplication = (applicationId: string) => {
     // Store the application ID in localStorage
-    localStorage.setItem('selected_application_id', applicationId);
+    localStorage.setItem('application_id', applicationId);
     navigate('/questionnaire');
   };
 
@@ -121,28 +123,17 @@ const Applications = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      // Get the timestamp of the application to delete
-      const { data: targetAnswer } = await supabase
-        .from('question_answers')
-        .select('created_at')
-        .eq('id', applicationToDelete.id)
-        .single();
-
-      if (!targetAnswer) {
-        throw new Error('Application not found');
-      }
-
-      // Delete all answers from the same timestamp
+      // Delete all answers with the same application_id
       const { error } = await supabase
         .from('question_answers')
         .delete()
         .eq('user_id', user.id)
-        .eq('created_at', targetAnswer.created_at);
+        .eq('application_id', applicationToDelete.application_id);
 
       if (error) throw error;
 
       // Update local state
-      setApplications(apps => apps.filter(app => app.id !== applicationToDelete.id));
+      setApplications(apps => apps.filter(app => app.application_id !== applicationToDelete.application_id));
       toast.success("Application deleted successfully");
     } catch (error) {
       console.error('Error deleting application:', error);
@@ -165,7 +156,12 @@ const Applications = () => {
             </div>
             <Button 
               onClick={() => {
-                localStorage.removeItem('selected_application_id');
+                localStorage.removeItem("application_id");
+                // Clear any existing answers
+                localStorage.removeItem("quiz_answers");
+                // Clear the completed state
+                localStorage.removeItem("force_quiz_complete");
+                setCurrentView("user");
                 navigate('/questionnaire');
               }}
               className="shrink-0"

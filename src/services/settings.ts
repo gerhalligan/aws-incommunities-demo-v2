@@ -1,13 +1,19 @@
 import { supabase } from "@/integrations/supabase/client";
 
 const SETTINGS_TABLE = 'user_settings';
+const DEFAULT_PERPLEXITY_KEY = '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';
 
 interface UserSettings {
   openaiApiKey?: string;
   [key: string]: any;
 }
 
-const DEFAULT_SETTINGS: UserSettings = {};
+const DEFAULT_SETTINGS: UserSettings = {
+  ai: {
+    provider: 'perplexity',
+    perplexityApiKey: DEFAULT_PERPLEXITY_KEY
+  }
+};
 
 export const loadUserSettings = async (): Promise<UserSettings> => {
   const { data: { user } } = await supabase.auth.getUser();

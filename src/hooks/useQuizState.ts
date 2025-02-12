@@ -21,14 +21,16 @@ export const useQuizState = () => {
   const [isTransitioning, setIsTransitioning] = useState(false);
   const [newOption, setNewOption] = useState("");
   const [questionHistory, setQuestionHistory] = useState<number[]>([0]);
-  const [isCompleted, setIsCompleted] = useState(false);
   const currentQuestion = questions[currentQuestionIndex];
   const [currentBranch, setCurrentBranch] = useState<RepeaterBranch | null>(null);
   const [repeaterBranches, setRepeaterBranches] = useState<Map<number, RepeaterBranch[]>>(new Map());
   const [aiAnalysis, setAiAnalysis] = useState<string>("");
+
+  const [isCompleted, setIsCompleted] = useState(false);
  
+  // To this:
   const [selectedApplicationId, setSelectedApplicationId] = useState<string | null>(
-    localStorage.getItem('selected_application_id')
+    localStorage.getItem('application_id')
   );
 
 
@@ -52,28 +54,32 @@ export const useQuizState = () => {
   const handleStartBranch = async (questionId: number, entryId: string) => {
     console.log('handleStartBranch called with:', { questionId, entryId });
 
+    // Ensure we have an application ID
+    if (!selectedApplicationId) {
+      console.error('No application ID available');
+      return;
+    }
+
     // Find the parent repeater question
     const parentQuestion = questions.find(q => q.id === questionId);
     if (!parentQuestion?.repeaterConfig) return;
 
-
-
     // Save repeater answer first if it exists
-   if (inputValue) {
-     try {
-       await saveAnswer(questionId, { value: inputValue });
-       // Update answers state immediately after saving
-       setAnswers(prev => new Map(prev).set(questionId, { value: inputValue }));
-     } catch (error) {
-       console.error('Error saving repeater answer:', error);
-       toast({
-         title: "Error",
-         description: "Failed to save repeater answer",
-         variant: "destructive"
-       });
-       return;
-     }
-   }
+    if (inputValue) {
+      try {
+        await saveAnswer(questionId, { value: inputValue }, undefined, false, undefined, selectedApplicationId);
+        // Update answers state immediately after saving
+        setAnswers(prev => new Map(prev).set(questionId, { value: inputValue }));
+      } catch (error) {
+        console.error('Error saving repeater answer:', error);
+        toast({
+          title: "Error",
+          description: "Failed to save repeater answer",
+          variant: "destructive"
+        });
+        return;
+      }
+    }
     
     // Try inputValue first, then fall back to answers map
     const repeaterAnswer = inputValue || answers.get(questionId);
@@ -123,7 +129,6 @@ export const useQuizState = () => {
     // Set current branch after updating all state
     setCurrentBranch(branch);
 
-
     // Simply move to the next question in sequence
     const nextIndex = currentQuestionIndex + 1;
     if (nextIndex < questions.length) {
@@ -135,6 +140,12 @@ export const useQuizState = () => {
   const handleReturnToRepeater = () => {
      console.log('handleReturnToRepeater.currentBranch', currentBranch);
     
+    // Ensure we have an application ID
+    if (!selectedApplicationId) {
+      console.error('No application ID available');
+      return;
+    }
+
     if (currentBranch) {
        // Only mark as complete if we're on the last question
       const updatedBranch = checkIsLastBranchQuestion(currentQuestion) 
@@ -163,7 +174,16 @@ export const useQuizState = () => {
       }
     }
   };
-  const [currentApplicationId, setCurrentApplicationId] = useState<string | null>(null);
+
+  // Create a helper function to update both state and localStorage
+  const updateApplicationId = (newId: string | null) => {
+    setSelectedApplicationId(newId);
+    if (newId) {
+      localStorage.setItem('application_id', newId);
+    } else {
+      localStorage.removeItem('application_id');
+    }
+  };
 
    useEffect(() => {
     const loadState = async () => {
@@ -179,11 +199,16 @@ export const useQuizState = () => {
         // Clear answers and generate new application ID for new applications
         if (!selectedApplicationId) {
           setAnswers(new Map());
-          setCurrentApplicationId(crypto.randomUUID());
+          // Generate new application ID if we don't have one
+          if (!selectedApplicationId) {
+            const newApplicationId = crypto.randomUUID();
+            updateApplicationId(newApplicationId);
+            console.log('Generated new application ID:', newApplicationId);
+          }
         } else {
           // Load existing application answers
-          setCurrentApplicationId(selectedApplicationId);
-          setCurrentApplicationId(selectedApplicationId);
+          updateApplicationId(selectedApplicationId);
+         
           const { data: { user } } = await supabase.auth.getUser();
           if (!user) return;
 
@@ -201,19 +226,18 @@ export const useQuizState = () => {
           }
 
 
-          if (applicationAnswers) {
+          if (applicationAnswers && applicationAnswers.length > 0) {
             const answersMap = new Map();
             applicationAnswers.forEach(answer => {
               answersMap.set(answer.question_id, answer.answer);
             });
             setAnswers(answersMap);
             setIsCompleted(true);
+          } else {
+            // Reset completion state if no answers found
+            setIsCompleted(false);
+            setAnswers(new Map());
           }
-        }
-
-        // If starting a new application, generate a new ID
-        if (!selectedApplicationId) {
-          setCurrentApplicationId(crypto.randomUUID());
         }
 
         // Check for forced completion state
@@ -244,13 +268,20 @@ useEffect(() => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
+      // Ensure we have an application ID
+      if (!selectedApplicationId) {
+        console.error('No application ID available');
+        return;
+      }
+
       const branchContext = currentBranch ? {
         branchId: currentBranch.entryId,
         parentQuestionId: currentBranch.parentQuestion?.id,
-        entryId: currentBranch.entryId
+        entryId: currentBranch.entryId,
+        entryIndex: currentBranch.entryIndex
       } : undefined;
 
-      const savedAnswer = await getAnswer(user.id, currentQuestion.id, branchContext, currentApplicationId);
+      const savedAnswer = await getAnswer(user.id, currentQuestion.id, branchContext, selectedApplicationId);
       
       if (!savedAnswer) {
         setInputValue('');
@@ -446,6 +477,11 @@ const getFilteredOptions = useCallback(() => {
 
 
   const handleInputSubmit = async (value: string, branchContext?: BranchContext) => {
+    if (!selectedApplicationId) {
+      console.error('No application ID available');
+      return;
+    }
+    
     //console.log('handleInputSubmit called with value:', value);
     //console.log('Branch context:', branchContext);
     setInputValue(value);
@@ -479,19 +515,20 @@ const getFilteredOptions = useCallback(() => {
          const existingAnswer = await getAnswer(
            (await supabase.auth.getUser()).data.user.id,
            currentQuestion.id,
-           branchContext
+           branchContext,
+           selectedApplicationId
          );
          
          if (existingAnswer) {
            // Update existing answer
-           await saveAnswer(currentQuestion.id, answerData, undefined, true, branchContext);
+           await saveAnswer(currentQuestion.id, answerData, undefined, true, branchContext, selectedApplicationId);
          } else {
            // Create new answer
-           await saveAnswer(currentQuestion.id, answerData, undefined, false, branchContext);
+           await saveAnswer(currentQuestion.id, answerData, undefined, false, branchContext, selectedApplicationId);
          }
        } else {
          // For non-repeater questions, proceed as normal
-         await saveAnswer(currentQuestion.id, answerData, undefined, false, branchContext);
+         await saveAnswer(currentQuestion.id, answerData, undefined, false, branchContext, selectedApplicationId);
        }
 
         setAnswers(prev => {
@@ -718,7 +755,14 @@ const getFilteredOptions = useCallback(() => {
            entryIndex: currentBranch.entryIndex
          } : undefined;
          
-        await saveAnswer(currentQuestion.id, currentAnswer, undefined, false, branchContext, currentApplicationId);
+        await saveAnswer(
+          currentQuestion.id,
+          currentAnswer,
+          undefined,
+          false,
+          branchContext,
+          selectedApplicationId
+        );
         } catch (error) {
           console.error("Error saving answer:", error);
           toast({
@@ -825,7 +869,7 @@ const getFilteredOptions = useCallback(() => {
     }
   };
 
-  const handleRemoveOption = (optionToRemove: Option) => {
+   const handleRemoveOption = (optionToRemove: Option) => {
     const updatedQuestions = JSON.parse(JSON.stringify(questions));
     updatedQuestions[currentQuestionIndex] = {
       ...currentQuestion,

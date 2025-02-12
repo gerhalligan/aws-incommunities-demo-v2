@@ -18,13 +18,16 @@ const buttonTextMap = {
   "74babb37-f296-4c36-b066-4f618cf52966": "Top 5 Local Newspapers",
   "dd92dc1d-3816-4732-85d2-52000bbc61f9": "Area Info",
   "e3186dcb-72ba-40e5-88b1-bb17723c682f": "Median Household Income",
-  "fc724685-80e9-43b3-b9ea-46bcc74faeeb": "Local Schools Info"
+  "fc724685-80e9-43b3-b9ea-46bcc74faeeb": "Local Schools Info",
+  "053cac4d-dae3-491a-ba46-2e3e64e2ce2e": "Top 5 Local Festivals",
+  "54c1ca89-8b17-4af2-92e9-2ecaf8e8100f": "Planning Objections in Last 5 Years"
 };
 
 const ReportDashboard = () => {
   const { answers, setAnswers, getAnswerByQuestionId, getAnswersByBranchEntryId, getBranchEntryIds, getBranchName } = useAnswersStore();
   const [activeTab, setActiveTab] = React.useState<string>('');
   const [isLoading, setIsLoading] = React.useState(true);
+  const [currentApplicationId] = React.useState(localStorage.getItem('application_id'));
 
   useEffect(() => {
     const loadAnswers = async () => {
@@ -35,18 +38,24 @@ const ReportDashboard = () => {
           console.error("User not authenticated");
           return;
         }
-
+  
+        if (!currentApplicationId) {
+          console.error("No application ID found");
+          return;
+        }
+  
         const { data: answers, error } = await supabase
           .from('question_answers')
           .select('*')
           .eq('user_id', user.id)
+          .eq('application_id', currentApplicationId)
           .order('created_at', { ascending: true });
-
+  
         if (error) {
           console.error("Error fetching answers:", error);
           return;
         }
-
+  
         console.log("Loaded answers:", answers);
         setAnswers(answers || []);
       } catch (error) {
@@ -55,10 +64,10 @@ const ReportDashboard = () => {
         setIsLoading(false);
       }
     };
-
+  
     loadAnswers();
-  }, [setAnswers]);
-
+  }, [setAnswers, currentApplicationId]);
+  
   useEffect(() => {
     if (!isLoading && answers.length > 0) {
       const branchIds = getBranchEntryIds();

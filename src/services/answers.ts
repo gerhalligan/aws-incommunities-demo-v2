@@ -16,9 +16,13 @@ export const getAnswer = async (
   userId: string,
   questionId: number,
   branchContext?: BranchContext,
-  applicationId?: string
+  applicationId: string
 ): Promise<string | Record<string, any> | undefined> => {
-  console.log('getAnswer called for:', { userId, questionId, branchContext });
+  if (!applicationId) {
+    throw new Error("Application ID is required");
+  }
+
+  console.log('getAnswer called for:', { userId, questionId, branchContext, applicationId });
 
   // Fetch the question details
   const { data: question, error: questionError } = await supabase
@@ -41,13 +45,9 @@ export const getAnswer = async (
     let baseQuery = supabase
       .from('question_answers')
       .select('*')
-      .eq('user_id', userId)
-      .eq('question_id', questionId);
-
-    // Add application_id filter if provided
-    if (applicationId) {
-      baseQuery = baseQuery.eq('application_id', applicationId);
-    }
+      .eq('user_id', userId) 
+      .eq('question_id', questionId)
+      .eq('application_id', applicationId);
 
     // Use the new branch columns if branchContext exists
     if (branchContext) {
@@ -177,24 +177,7 @@ export const saveAnswer = async (
   // Get or create application ID
   let currentApplicationId = applicationId;
   if (!currentApplicationId) {
-    // Check if this is the first answer of a new application
-    if (questionId === 1 && !branchContext) {
-      currentApplicationId = crypto.randomUUID();
-    } else {
-      // Try to get application ID from an existing answer
-      const { data: existingAnswer } = await supabase
-        .from('question_answers')
-        .select('application_id')
-        .eq('user_id', user.id)
-        .eq('question_id', 1)
-        .is('parent_repeater_id', null)
-        .is('branch_entry_id', null)
-        .order('created_at', { ascending: false })
-        .limit(1)
-        .single();
-      
-      currentApplicationId = existingAnswer?.application_id;
-    }
+    throw new Error("Application ID is required");
   }
   if (!questionId || !answer) {
     console.error("Missing required parameters: questionId or answer", { questionId, answer });
@@ -202,10 +185,11 @@ export const saveAnswer = async (
   }
 
   try {
+    console.log('Saving answer with application ID:', currentApplicationId);
     console.log("saveAnswer called with:", { questionId, answer, aiAnalysis, updateAIOnly, branchContext });
 
     // Fetch existing answer and its question details
-    const answerObject = await getAnswer(user.id, questionId, branchContext);
+    const answerObject = await getAnswer(user.id, questionId, branchContext, currentApplicationId);
     const question = answerObject?.question;
     let existingAnswer = null; // Initialize with null
     
@@ -387,5 +371,3 @@ export const getBranchAnswers = async (
     return { answers: [], hasStarted: false, isComplete: false };
   }
 };
-
-

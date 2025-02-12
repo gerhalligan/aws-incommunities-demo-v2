@@ -11,12 +11,9 @@ const Home = () => {
   const { setCurrentView } = useView();
 
   const handleNewApplication = () => {
-    localStorage.removeItem('selected_application_id');
+    localStorage.removeItem("application_id");
     // Clear any existing answers
-    localStorage.removeItem('quiz_answers');
-    // Generate new application ID
-    const newApplicationId = crypto.randomUUID();
-    localStorage.setItem('current_application_id', newApplicationId);
+    localStorage.removeItem("quiz_answers");
     setCurrentView("user");
     navigate("/questionnaire");
   };

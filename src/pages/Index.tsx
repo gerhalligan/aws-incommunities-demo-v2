@@ -6,7 +6,7 @@ import { format } from "date-fns";
 
 const Index = () => {
   const [applicationDate, setApplicationDate] = useState<string | null>(null);
-  const selectedApplicationId = localStorage.getItem('selected_application_id');
+  const selectedApplicationId = localStorage.getItem('application_id');
 
   useEffect(() => {
     const loadApplicationDate = async () => {
@@ -15,7 +15,9 @@ const Index = () => {
       const { data, error } = await supabase
         .from('question_answers')
         .select('created_at')
-        .eq('id', selectedApplicationId)
+        .eq('application_id', selectedApplicationId)
+        .order('created_at', { ascending: true })
+        .limit(1)
         .single();
 
       if (error) {

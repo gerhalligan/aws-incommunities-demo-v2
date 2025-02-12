@@ -16,7 +16,7 @@ import { useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
 export const QuizComponent = () => {
-  const { currentView } = useView();
+  const { currentView, setCurrentView } = useView()
   const {
     isLoading,
     questions,
@@ -53,6 +53,12 @@ export const QuizComponent = () => {
 
   const [currentFormData, setCurrentFormData] = useState<Record<string, string>[]>([]);
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    if (isCompleted) {
+      setCurrentView("user");
+    }
+  }, [isCompleted, setCurrentView]);
 
   console.log(currentBranch);
 

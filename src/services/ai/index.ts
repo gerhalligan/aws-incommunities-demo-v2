@@ -5,20 +5,32 @@ import { generateOpenAIResponse } from './openai';
 import { generatePerplexityResponse } from './perplexity';
 import type { BranchContext } from '@/types/answers';
 
+interface AIContext {
+  questionId?: number;
+  currentAnswer?: string | { value: string };
+  branchContext?: BranchContext;
+  buttonId?: string;
+  applicationId?: string;
+}
+
 export const generateAIResponse = async (
   prompt: string, 
-  questionId?: number, 
-  currentAnswer?: string | { value: string },
-  branchContext?: BranchContext,
-  buttonId?: string
+  context?: AIContext
 ): Promise<string> => {
   try {
+    const { questionId, currentAnswer, branchContext, buttonId, applicationId } = context || {};
+    
+    if (!applicationId) {
+      throw new Error('Application ID is required for AI analysis');
+    }
+
     // If we have questionId and currentAnswer, check if we need a new response
     if (questionId !== undefined && currentAnswer && buttonId) {
       const existingAnswer = await getAnswer(
         (await supabase.auth.getUser()).data.user.id,
         questionId,
-        branchContext
+        branchContext,
+        applicationId
       );
 
       const existingButtonResponse = existingAnswer?.aiAnalysis?.buttonResponses?.[buttonId];
@@ -73,9 +85,10 @@ export const generateAIResponse = async (
          
         console.log('generateAIResponse.answerData', answerData);
 
-        await saveAnswer(questionId, answerData, response, false, branchContext);
+        await saveAnswer(questionId, answerData, response, false, branchContext, applicationId);
       } catch (error) {
         console.error('Error saving AI analysis:', error);
+        throw error;
       }
     }
 
