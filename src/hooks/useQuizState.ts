@@ -3,6 +3,7 @@ import { Question, Option } from "@/types/quiz";
 import { loadQuizState, saveQuizState } from "@/services/quiz"; 
 import { saveAnswer, getAnswer } from "@/services/answers";
 import { useView } from "@/contexts/ViewContext";
+import { useAnswers } from "@/contexts/AnswersContext";
 import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { generateAIResponse } from "@/services/ai";
@@ -10,9 +11,9 @@ import { getBranchAnswers } from "@/services/answers";
 
 export const useQuizState = () => {
   const { currentView } = useView();
+  const { answers, setAnswers } = useAnswers();
   const [questions, setQuestions] = useState<Question[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [answers, setAnswers] = useState<Map<number, string | Option>>(new Map());
   const [selectedOption, setSelectedOption] = useState<Option | null>(null);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [inputValue, setInputValue] = useState<string>("");
@@ -25,6 +26,7 @@ export const useQuizState = () => {
   const [currentBranch, setCurrentBranch] = useState<RepeaterBranch | null>(null);
   const [repeaterBranches, setRepeaterBranches] = useState<Map<number, RepeaterBranch[]>>(new Map());
   const [aiAnalysis, setAiAnalysis] = useState<string>("");
+ 
   const [selectedApplicationId, setSelectedApplicationId] = useState<string | null>(
     localStorage.getItem('selected_application_id')
   );
@@ -161,6 +163,7 @@ export const useQuizState = () => {
       }
     }
   };
+  const [currentApplicationId, setCurrentApplicationId] = useState<string | null>(null);
 
    useEffect(() => {
     const loadState = async () => {
@@ -173,38 +176,44 @@ export const useQuizState = () => {
         }
         setQuestions(loadedQuestions);
         
-        // If viewing an existing application, load its answers
-        if (selectedApplicationId) {
+        // Clear answers and generate new application ID for new applications
+        if (!selectedApplicationId) {
+          setAnswers(new Map());
+          setCurrentApplicationId(crypto.randomUUID());
+        } else {
+          // Load existing application answers
+          setCurrentApplicationId(selectedApplicationId);
+          setCurrentApplicationId(selectedApplicationId);
           const { data: { user } } = await supabase.auth.getUser();
           if (!user) return;
 
           const { data: applicationAnswers, error } = await supabase
             .from('question_answers')
-            .select('*')
+            .select('question_id, answer')
             .eq('user_id', user.id)
-            .eq('id', selectedApplicationId)
-            .single();
+            .eq('application_id', selectedApplicationId)
+            .is('parent_repeater_id', null)
+            .is('branch_entry_id', null);
 
           if (error) {
             console.error('Error loading application:', error);
             return;
           }
 
-          // Get all answers from the same timestamp
-          const { data: allAnswers } = await supabase
-            .from('question_answers')
-            .select('*')
-            .eq('user_id', user.id)
-            .eq('created_at', applicationAnswers.created_at);
 
-          if (allAnswers) {
+          if (applicationAnswers) {
             const answersMap = new Map();
-            allAnswers.forEach(answer => {
+            applicationAnswers.forEach(answer => {
               answersMap.set(answer.question_id, answer.answer);
             });
             setAnswers(answersMap);
             setIsCompleted(true);
           }
+        }
+
+        // If starting a new application, generate a new ID
+        if (!selectedApplicationId) {
+          setCurrentApplicationId(crypto.randomUUID());
         }
 
         // Check for forced completion state
@@ -241,7 +250,7 @@ useEffect(() => {
         entryId: currentBranch.entryId
       } : undefined;
 
-      const savedAnswer = await getAnswer(user.id, currentQuestion.id, branchContext);
+      const savedAnswer = await getAnswer(user.id, currentQuestion.id, branchContext, currentApplicationId);
       
       if (!savedAnswer) {
         setInputValue('');
@@ -709,7 +718,7 @@ const getFilteredOptions = useCallback(() => {
            entryIndex: currentBranch.entryIndex
          } : undefined;
          
-         await saveAnswer(currentQuestion.id, currentAnswer, undefined, false, branchContext);
+        await saveAnswer(currentQuestion.id, currentAnswer, undefined, false, branchContext, currentApplicationId);
         } catch (error) {
           console.error("Error saving answer:", error);
           toast({

@@ -4,6 +4,8 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { ViewProvider } from "./contexts/ViewContext";
+import { AnswersProvider } from "./contexts/AnswersContext";
+import { ThemeProvider } from "next-themes";
 import { useEffect, useState } from "react";
 import { supabase } from "./integrations/supabase/client";
 import Home from "./pages/Home";
@@ -37,58 +39,62 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
-      <ViewProvider>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
-          <Routes>
-            <Route path="/login" element={<Login />} />
-            <Route
-              path="/questionnaire"
-              element={
-                <ProtectedRoute>
-                  <Index />
-                </ProtectedRoute>
-              }
-            />
-            <Route path="/dashboard/*" element={<DashboardRoutes />} />
-            <Route
-              path="/"
-              element={
-                <ProtectedRoute>
-                  <Home />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/settings"
-              element={
-                <ProtectedRoute>
-                  <Settings />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/profile"
-              element={
-                <ProtectedRoute>
-                  <Profile />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/documentation"
-              element={
-                <ProtectedRoute>
-                  <Documentation />
-                </ProtectedRoute>
-              }
-            />
-            <Route path="/applications" element={<Applications />} />
-            <Route path="/reports" element={<Reports />} />
-          </Routes>
-        </BrowserRouter>
-      </ViewProvider>
+      <ThemeProvider defaultTheme="light">
+        <ViewProvider>
+          <AnswersProvider>
+            <Toaster />
+            <Sonner />
+            <BrowserRouter>
+              <Routes>
+                <Route path="/login" element={<Login />} />
+                <Route
+                  path="/questionnaire"
+                  element={
+                    <ProtectedRoute>
+                      <Index />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route path="/dashboard/*" element={<DashboardRoutes />} />
+                <Route
+                  path="/"
+                  element={
+                    <ProtectedRoute>
+                      <Home />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/settings"
+                  element={
+                    <ProtectedRoute>
+                      <Settings />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/profile"
+                  element={
+                    <ProtectedRoute>
+                      <Profile />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/documentation"
+                  element={
+                    <ProtectedRoute>
+                      <Documentation />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route path="/applications" element={<Applications />} />
+                <Route path="/reports" element={<Reports />} />
+              </Routes>
+            </BrowserRouter>
+          </AnswersProvider>
+        </ViewProvider>
+      </ThemeProvider>
     </TooltipProvider>
   </QueryClientProvider>
 );

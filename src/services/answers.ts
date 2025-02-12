@@ -15,7 +15,8 @@ interface StoredAnswer extends Option {
 export const getAnswer = async (
   userId: string,
   questionId: number,
-  branchContext?: BranchContext
+  branchContext?: BranchContext,
+  applicationId?: string
 ): Promise<string | Record<string, any> | undefined> => {
   console.log('getAnswer called for:', { userId, questionId, branchContext });
 
@@ -42,6 +43,11 @@ export const getAnswer = async (
       .select('*')
       .eq('user_id', userId)
       .eq('question_id', questionId);
+
+    // Add application_id filter if provided
+    if (applicationId) {
+      baseQuery = baseQuery.eq('application_id', applicationId);
+    }
 
     // Use the new branch columns if branchContext exists
     if (branchContext) {
@@ -159,7 +165,8 @@ export const saveAnswer = async (
   answer: string | Option | { value: string; aiAnalysis?: { analysis?: string; buttonResponses?: Record<string, string> } } | FileUploadAnswer,
   aiAnalysis?: string,
   updateAIOnly: boolean = false,
-  branchContext?: BranchContext
+  branchContext?: BranchContext,
+  applicationId?: string
 ) => {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) {
@@ -167,6 +174,28 @@ export const saveAnswer = async (
     throw new Error("User not authenticated");
   }
 
+  // Get or create application ID
+  let currentApplicationId = applicationId;
+  if (!currentApplicationId) {
+    // Check if this is the first answer of a new application
+    if (questionId === 1 && !branchContext) {
+      currentApplicationId = crypto.randomUUID();
+    } else {
+      // Try to get application ID from an existing answer
+      const { data: existingAnswer } = await supabase
+        .from('question_answers')
+        .select('application_id')
+        .eq('user_id', user.id)
+        .eq('question_id', 1)
+        .is('parent_repeater_id', null)
+        .is('branch_entry_id', null)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .single();
+      
+      currentApplicationId = existingAnswer?.application_id;
+    }
+  }
   if (!questionId || !answer) {
     console.error("Missing required parameters: questionId or answer", { questionId, answer });
     throw new Error("Missing required parameters: questionId or answer");
@@ -303,6 +332,7 @@ export const saveAnswer = async (
       const { error: insertError } = await supabase
         .from("question_answers")
         .insert({
+          application_id: currentApplicationId,
           user_id: user.id,
           question_id: questionId,
           answer: answerData,

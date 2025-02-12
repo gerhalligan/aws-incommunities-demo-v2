@@ -12,6 +12,11 @@ const Home = () => {
 
   const handleNewApplication = () => {
     localStorage.removeItem('selected_application_id');
+    // Clear any existing answers
+    localStorage.removeItem('quiz_answers');
+    // Generate new application ID
+    const newApplicationId = crypto.randomUUID();
+    localStorage.setItem('current_application_id', newApplicationId);
     setCurrentView("user");
     navigate("/questionnaire");
   };
