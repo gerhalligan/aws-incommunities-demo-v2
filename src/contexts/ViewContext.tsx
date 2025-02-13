@@ -1,6 +1,5 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import type { Database } from "@/integrations/supabase/types";
 
 type ViewType = "user" | "admin";
 
@@ -12,22 +11,13 @@ interface ViewContextType {
 const ViewContext = createContext<ViewContextType | undefined>(undefined);
 
 export const ViewProvider = ({ children }: { children: ReactNode }) => {
-  const [currentView, setCurrentView] = useState<ViewType>("user");
+  const [currentView, setCurrentView] = useState<ViewType>("user"); // Default to user view
 
   useEffect(() => {
     const loadUserRole = async () => {
       const { data: { session } } = await supabase.auth.getSession();
-      if (session?.user) {
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('role')
-          .eq('id', session.user.id)
-          .single();
-        
-        if (profile) {
-          setCurrentView(profile.role as ViewType);
-        }
-      }
+      // No longer automatically setting view based on role
+      // Always start in user view, even for admins
     };
 
     loadUserRole();

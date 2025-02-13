@@ -14,6 +14,7 @@ import {
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { FileText, Plus, Search, Calendar, MapPin, Trash2 } from "lucide-react";
+import { useView } from "@/contexts/ViewContext";
 import { format } from "date-fns";
 import { toast } from "sonner";
 import {
@@ -42,6 +43,7 @@ const Applications = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [applicationToDelete, setApplicationToDelete] = useState<Application | null>(null);
   const navigate = useNavigate();
+  const { setCurrentView } = useView();
 
   useEffect(() => {
     loadApplications();

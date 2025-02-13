@@ -20,6 +20,7 @@ import {
 import { useView } from "@/contexts/ViewContext";
 import { useAnswers } from "@/contexts/AnswersContext";
 import { useNavigate } from "react-router-dom";
+import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
 import { useState, useEffect } from "react";
@@ -55,12 +56,22 @@ const Header = () => {
   };
 
   const handleNewApplication = () => {
-    // Clear selected application ID
     localStorage.removeItem("application_id");
-    // Clear any existing answers
     localStorage.removeItem("quiz_answers");
+    localStorage.removeItem("force_quiz_complete");
+    clearAnswers();
     setCurrentView("user");
-    navigate("/questionnaire");
+    
+    // Check if we're already on the questionnaire page
+    if (window.location.pathname === "/questionnaire") {
+      window.location.reload();
+    } else {
+      navigate("/questionnaire");
+    }
+    
+    toast.success("Started new application", {
+      description: "All previous data has been cleared"
+    });
   };
 
   const handleLogout = async () => {
@@ -148,6 +159,7 @@ const Header = () => {
                 <MenubarItem
                   className="cursor-pointer"
                   onClick={handleNewApplication}
+                  id="new-application-button"
                 >
                   <FileText className="mr-2 h-4 w-4" />
                   <span>New Application</span>
