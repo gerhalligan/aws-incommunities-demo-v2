@@ -86,12 +86,24 @@ export const useQuizState = () => {
     let entryValues = {};
     let entryIndex = -1;
     
-    if (repeaterAnswer && typeof repeaterAnswer === 'string') {
+    if (repeaterAnswer) {
       try {
-        const parsed = JSON.parse(repeaterAnswer);
-        entryIndex = parsed.entries?.findIndex(e => e.id === entryId);
-        entryValues = parsed.entries?.[entryIndex]?.values || {};
-        console.log('Found entry values:', entryValues);
+        // Handle both string and array object cases
+        let parsed;
+        if (typeof repeaterAnswer === 'string') {
+          parsed = JSON.parse(repeaterAnswer);
+        } else if (Array.isArray(repeaterAnswer)) {
+          parsed = { entries: repeaterAnswer };
+        } else if (typeof repeaterAnswer === 'object') {
+          parsed = repeaterAnswer;
+        }
+    
+        // Find the entry and its values
+        if (parsed && parsed.entries) {
+          entryIndex = parsed.entries.findIndex(e => e.id === entryId);
+          entryValues = parsed.entries?.[entryIndex]?.values || {};
+          console.log('Found entry values:', entryValues);
+        }
       } catch (e) {
         console.error('Error parsing repeater answer:', e);
       }

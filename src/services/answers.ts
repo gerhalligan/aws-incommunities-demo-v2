@@ -52,12 +52,12 @@ export const getAnswer = async (
     // Use the new branch columns if branchContext exists
     if (branchContext) {
       baseQuery = baseQuery
-        .eq('parent_repeater_id', branchContext.parentQuestionId)
-        .eq('branch_entry_id', branchContext.entryId);
+        .eq("parent_repeater_id", branchContext.parentQuestionId)
+        .eq("branch_entry_id", branchContext.entryId)
+        .eq("branch_entry_index", branchContext.entryIndex);
     } else {
       baseQuery = baseQuery
-        .is('parent_repeater_id', null)
-        .is('branch_entry_id', null);
+        .eq('branch_entry_index', -1); // main branch is always -1
     }
 
     // Add sorting and limit to get the earliest row
@@ -175,8 +175,7 @@ export const saveAnswer = async (
   }
 
   // Get or create application ID
-  let currentApplicationId = applicationId;
-  if (!currentApplicationId) {
+  if (!applicationId) {
     throw new Error("Application ID is required");
   }
   if (!questionId || !answer) {
@@ -185,11 +184,11 @@ export const saveAnswer = async (
   }
 
   try {
-    console.log('Saving answer with application ID:', currentApplicationId);
+    console.log('Saving answer with application ID:', applicationId);
     console.log("saveAnswer called with:", { questionId, answer, aiAnalysis, updateAIOnly, branchContext });
 
     // Fetch existing answer and its question details
-    const answerObject = await getAnswer(user.id, questionId, branchContext, currentApplicationId);
+    const answerObject = await getAnswer(user.id, questionId, branchContext, applicationId);
     const question = answerObject?.question;
     let existingAnswer = null; // Initialize with null
     
@@ -291,7 +290,8 @@ export const saveAnswer = async (
           updated_at: new Date().toISOString(),
         } satisfies QuestionAnswerUpdate)
         .eq("user_id", user.id)
-        .eq("question_id", questionId);
+        .eq("question_id", questionId)
+        .eq('application_id', applicationId);
 
       if (branchContext) {
         updateQuery = updateQuery
@@ -300,8 +300,7 @@ export const saveAnswer = async (
           .eq("branch_entry_index", branchContext.entryIndex);
       } else {
         updateQuery = updateQuery
-          .is("parent_repeater_id", null)
-          .is("branch_entry_id", null);
+          .eq("branch_entry_index", -1);
       }
 
       const { error: updateError } = await updateQuery;
@@ -316,13 +315,13 @@ export const saveAnswer = async (
       const { error: insertError } = await supabase
         .from("question_answers")
         .insert({
-          application_id: currentApplicationId,
+          application_id: applicationId,
           user_id: user.id,
           question_id: questionId,
           answer: answerData,
           parent_repeater_id: branchContext?.parentQuestionId || null,
           branch_entry_id: branchContext?.entryId || null,
-          branch_entry_index: branchContext?.entryIndex || null,
+          branch_entry_index: branchContext?.entryIndex || -1,
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString(),
         } satisfies QuestionAnswerInsert);
