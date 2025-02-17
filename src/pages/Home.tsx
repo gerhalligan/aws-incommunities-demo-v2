@@ -69,7 +69,7 @@ const Home = () => {
           <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-8 text-center">
             Quick Actions
           </h2>
-          <div className="grid md:grid-cols-3 gap-6 mb-12">
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
             <Card className="p-6 hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1">
               <div className="flex items-start space-x-4">
                 <div className="p-3 rounded-full bg-primary/10">
@@ -124,6 +124,26 @@ const Home = () => {
                     onClick={() => navigate("/documentation")}
                   >
                     View Docs
+                    <ArrowRight className="w-4 h-4 ml-2" />
+                  </Button>
+                </div>
+              </div>
+            </Card>
+
+            <Card className="p-6 hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1">
+              <div className="flex items-start space-x-4">
+                <div className="p-3 rounded-full bg-primary/10">
+                <Users className="w-6 h-6 text-primary" />
+                </div>
+                <div className="flex-1">
+                  <h3 className="text-lg font-semibold mb-2">Engagement Stakeholders </h3>
+                  <p className="text-gray-600 mb-4">Get scores for different engagement stakeholders.</p>
+                  <Button 
+                    variant="outline" 
+                    className="w-full"
+                    onClick={() => navigate("/engagement-lookup")}
+                  >
+                    View Lookup
                     <ArrowRight className="w-4 h-4 ml-2" />
                   </Button>
                 </div>

@@ -11,6 +11,7 @@ import { supabase } from "./integrations/supabase/client";
 import Home from "./pages/Home";
 import Applications from "./pages/Applications";
 import Index from "./pages/Index";
+import EngagementLookup from "./pages/EngagementLookup";
 import Settings from "./pages/Settings";
 import Login from "./pages/Login";
 import Profile from "./pages/Profile";
@@ -88,6 +89,7 @@ const App = () => (
                     </ProtectedRoute>
                   }
                 />
+                <Route path="/engagement-lookup" element={<EngagementLookup />} />
                 <Route path="/applications" element={<Applications />} />
                 <Route path="/reports" element={<Reports />} />
               </Routes>
