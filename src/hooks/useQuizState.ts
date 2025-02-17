@@ -186,6 +186,10 @@ export const useQuizState = () => {
       }
     }
   };
+  
+  const [isEditMode, setIsEditMode] = useState(
+    localStorage.getItem('edit_mode') === 'true'
+  );
 
   // Create a helper function to update both state and localStorage
   const updateApplicationId = (newId: string | null) => {
@@ -244,7 +248,7 @@ export const useQuizState = () => {
               answersMap.set(answer.question_id, answer.answer);
             });
             setAnswers(answersMap);
-            setIsCompleted(true);
+            setIsCompleted(isEditMode ? false : true);
           } else {
             // Reset completion state if no answers found
             setIsCompleted(false);
@@ -260,6 +264,9 @@ export const useQuizState = () => {
           // Remove the flag after using it
           window.localStorage.removeItem("force_quiz_complete");
         }
+
+        // Clear edit mode flag after loading
+        localStorage.removeItem('edit_mode');
       } catch (error) {
         console.error("Error loading quiz state:", error);
         toast.error("Failed to load questions. Please try refreshing the page.");

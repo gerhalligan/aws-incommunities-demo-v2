@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/table";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { FileText, Plus, Search, Calendar, MapPin, Trash2 } from "lucide-react";
+import { FileText, Plus, Search, Calendar, MapPin, Trash2, Edit2 } from "lucide-react";
 import { useView } from "@/contexts/ViewContext";
 import { format } from "date-fns";
 import { toast } from "sonner";
@@ -115,6 +115,19 @@ const Applications = () => {
   const handleViewApplication = (applicationId: string) => {
     // Store the application ID in localStorage
     localStorage.setItem('application_id', applicationId);
+    localStorage.setItem('force_quiz_complete', 'true');
+    navigate('/questionnaire');
+  };
+
+  // And in the Applications.tsx file, modify the handleEditApplication function:
+  const handleEditApplication = (applicationId: string) => {
+    // Store the application ID in localStorage
+    localStorage.setItem('application_id', applicationId);
+    // Set edit mode flag
+    localStorage.setItem('edit_mode', 'true');
+    // Remove force complete flag to enable editing
+    localStorage.removeItem('force_quiz_complete');
+    setCurrentView("user");
     navigate('/questionnaire');
   };
 
@@ -229,6 +242,15 @@ const Applications = () => {
                             >
                               <FileText className="w-4 h-4 mr-2" />
                               View
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleEditApplication(app.id)}
+                              className="opacity-0 group-hover:opacity-100 transition-opacity"
+                            >
+                              <Edit2 className="w-4 h-4 mr-2" />
+                              Edit
                             </Button>
                             <Button
                               variant="outline"
