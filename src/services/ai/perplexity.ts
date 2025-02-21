@@ -16,7 +16,7 @@ export const generatePerplexityResponse = async (prompt: string, apiKey: string)
 
   // Log Request Body
   const requestBody = {
-    model: "llama-3.1-sonar-small-128k-online", // Replace with a valid model name
+    model: "sonar", // Replace with a valid model name
     messages: [
       {
         role: "user",
