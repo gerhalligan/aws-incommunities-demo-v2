@@ -150,8 +150,8 @@ export const QuizContent = ({
     : undefined;
   
 
-  const generateResponse = async (answer: string, buttonId?: string) => {
-    if (currentQuestion.aiLookup?.enabled && currentQuestion.aiLookup?.prompt) {
+    const generateResponse = async (answer: string, buttonId?: string, applicationId?: string, forceRefresh?: boolean) => {
+    if (currentQuestion.aiLookup?.enabled) {
       setIsGeneratingResponse(true);
 
       if (!currentApplicationId) {
@@ -164,12 +164,15 @@ export const QuizContent = ({
       try {
         // Get the prompt based on whether a button was clicked
         let prompt;
+        let globalPrompt;
         if (buttonId) {
           const button = currentQuestion.aiLookup.buttons?.find(b => b.id === buttonId);
           prompt = button?.prompt || '';
-        } else {
-          prompt = currentQuestion.aiLookup.prompt;
         }
+
+        globalPrompt = currentQuestion.aiLookup.prompt;
+
+        prompt = (prompt ? prompt + "\n\n" : "") + globalPrompt; 
         prompt = prompt.replace("{{question}}", currentQuestion.question);
         prompt = prompt.replace("{{answer}}", answer);
   
@@ -178,11 +181,21 @@ export const QuizContent = ({
           currentAnswer: { value: answer },
           branchContext,
           buttonId,
-          applicationId: currentApplicationId
+          applicationId: currentApplicationId,
+          forceRefresh
         });
          // Only update aiResponse if this is not a button response
       
-        setAiResponse(response);
+         // Handle both string and object responses
+         if (typeof response === 'string') {
+            setAiResponse(response);
+          } else if (response && typeof response === 'object') {
+            // If it's an object response, use the appropriate field
+            const analysisText = buttonId 
+              ? response.aiAnalysis?.buttonResponses?.[buttonId] 
+              : response.aiAnalysis?.analysis;
+            setAiResponse(analysisText || '');
+          }
 
       } catch (error) {
         console.error("Error generating AI response:", error);

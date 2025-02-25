@@ -4,9 +4,10 @@ import { Card } from "./ui/card";
 import { Textarea } from "./ui/textarea";
 import { Button } from "./ui/button";
 import { Question } from "@/types/quiz";
-import { Loader2, Eye, Wand2 } from "lucide-react";
+import { Loader2, Eye, Wand2, RefreshCw } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { getAnswer } from "@/services/answers";
+import { toast } from "sonner";
 
 interface AIResponseProps {
   isLoading: boolean;
@@ -14,7 +15,7 @@ interface AIResponseProps {
   onResponseChange: (response: string) => void;
   question?: Question;
   branchContext?: string;
-  onAILookup?: (value: string, buttonId?: string, applicationId?: string) => void;
+  onAILookup?: (value: string, buttonId?: string, applicationId?: string, forceRefresh?: boolean) => void;
   inputValue?: string;
 }
 
@@ -82,13 +83,36 @@ const AIResponse = ({
     <Card className="relative p-4 space-y-2">
       <div className="flex items-center justify-between">
         <h3 className="text-sm font-medium text-gray-700">AI Analysis</h3>
-        {isLoading && (
-          <div className="flex items-center text-sm text-gray-500">
-            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-            Generating response...
+        <div className="flex items-center gap-2">
+          {selectedButtonId && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => {
+                if (!inputValue) {
+                  toast.error("Please enter a value first");
+                  return;
+                }
+                if (!selectedButtonId) {
+                  toast.error("Please select an analysis type first");
+                  return;
+                }
+                // Pass true for forceRefresh when refresh button is clicked
+                onAILookup?.(inputValue, selectedButtonId, applicationId, true);
+              }}
+              disabled={isLoading}
+              className="h-8 px-2"
+            >
+              <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
+            </Button>
+          )}
+          {isLoading && (
+            <div className="flex items-center text-sm text-gray-500">
+              Generating response...
+            </div>
+            )}
           </div>
-        )}
-      </div>
+        </div>
 
       {isEditing ? (
         <>
@@ -116,14 +140,13 @@ const AIResponse = ({
                       key={button.id}
                       variant={selectedButtonId === button.id ? "default" : "outline"}
                       onClick={() => {
-                        if (selectedButtonId === button.id) {
-                          setSelectedButtonId(null); // Deselect if already selected
-                        } else {
+                        //if (selectedButtonId === button.id) {
+                        //  setSelectedButtonId(null); // Deselect if already selected
+                        //} else {
+                        
                           setSelectedButtonId(button.id);
-                          if (!storedAnalysis?.buttonResponses?.[button.id]) {
-                            onAILookup?.(inputValue || "", button.id, applicationId);
-                          }
-                        }
+                            onAILookup?.(inputValue || "", button.id, applicationId, false);
+                       // }
                       }}
                       className="shrink-0 whitespace-nowrap"
                       disabled={isLoading || !inputValue}

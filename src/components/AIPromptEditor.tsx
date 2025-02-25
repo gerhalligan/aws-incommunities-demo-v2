@@ -79,6 +79,10 @@ export const AIPromptEditor = ({ question, onUpdate }: AIPromptEditorProps) => {
     { tag: "{{question}}", description: "Current question text" },
     { tag: "{{answer}}", description: "Selected option or input text" },
     { tag: "{{previousAnswer}}", description: "Previous question's answer" },
+    { tag: "{{currentYear}}", description: "Current year (e.g., 2025)" },
+    { tag: "{{currentDate}}", description: "Current date (e.g., February 17, 2025)" },
+    { tag: "{{previousYear}}", description: "Previous year (e.g., 2024)" },
+    { tag: "{{nextYear}}", description: "Next year (e.g., 2026)" },
   ];
 
   return (

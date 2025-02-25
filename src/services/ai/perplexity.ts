@@ -16,7 +16,7 @@ export const generatePerplexityResponse = async (prompt: string, apiKey: string)
 
   // Log Request Body
   const requestBody = {
-    model: "sonar", // Replace with a valid model name
+    model: "sonar-reasoning-pro", // Replace with a valid model name
     messages: [
       {
         role: "user",
@@ -77,8 +77,12 @@ export const generatePerplexityResponse = async (prompt: string, apiKey: string)
 
     // Return the AI-generated content
     const content = data.choices[0].message.content;
-    console.log("AI Response Content:", content);
-    return content;
+    
+    // Remove <think> tags and their content
+    const cleanedContent = content.replace(/<think>[\s\S]*?<\/think>/g, '').trim();
+    
+    console.log("AI Response Content (cleaned):", cleanedContent);
+    return cleanedContent;
 
   } catch (error) {
     // Log Catch-All Errors

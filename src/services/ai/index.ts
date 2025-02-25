@@ -11,6 +11,7 @@ interface AIContext {
   branchContext?: BranchContext;
   buttonId?: string;
   applicationId?: string;
+  forceRefresh?: boolean;
 }
 
 export const generateAIResponse = async (
@@ -18,40 +19,62 @@ export const generateAIResponse = async (
   context?: AIContext
 ): Promise<string> => {
   try {
-    const { questionId, currentAnswer, branchContext, buttonId, applicationId } = context || {};
+    const { questionId, currentAnswer, branchContext, buttonId, applicationId, forceRefresh } = context || {};
     
     if (!applicationId) {
       throw new Error('Application ID is required for AI analysis');
     }
 
+    // Process date-related merge tags
+    const currentDate = new Date();
+    const currentYear = currentDate.getFullYear();
+    
+    prompt = prompt
+      .replace(/{{currentYear}}/g, currentYear.toString())
+      .replace(/{{currentDate}}/g, currentDate.toISOString().split('T')[0])
+      .replace(/{{previousYear}}/g, (currentYear - 1).toString())
+      .replace(/{{nextYear}}/g, (currentYear + 1).toString());
+
+    // Validate that we have a non-empty prompt after replacements
+    if (!prompt.trim()) {
+      throw new Error('The generated prompt is empty after processing merge tags. Please check your prompt template.');
+    }
+
     // If we have questionId and currentAnswer, check if we need a new response
     if (questionId !== undefined && currentAnswer && buttonId) {
-      const existingAnswer = await getAnswer(
-        (await supabase.auth.getUser()).data.user.id,
-        questionId,
-        branchContext,
-        applicationId
-      );
-
-      const existingButtonResponse = existingAnswer?.aiAnalysis?.buttonResponses?.[buttonId];
-      const existingValue = existingAnswer?.value;
-      const currentValue = typeof currentAnswer === 'string' ? currentAnswer : currentAnswer.value;
-      
-      // Return existing response if we have one and the answer hasn't changed
-      if (existingButtonResponse && existingValue === currentValue) {
-        const existingAnswerData = {
-          value: existingValue || '',
-          aiAnalysis: {
-            analysis: existingButtonResponse,
-            buttonResponses: {
-              ...(existingAnswer?.aiAnalysis?.buttonResponses || {})
-            },
-          },
-        };
-      
-        return existingAnswerData;
+        // Skip cache check if forceRefresh is true
+      if (forceRefresh) {
+        console.log('Force refresh requested, skipping cache check');
+      } else {
+          const existingAnswer = await getAnswer(
+            (await supabase.auth.getUser()).data.user.id,
+            questionId,
+            branchContext,
+            applicationId
+          );
+    
+          const existingButtonResponse = existingAnswer?.aiAnalysis?.buttonResponses?.[buttonId];
+          const existingValue = existingAnswer?.value;
+          const lastAnalysisTimestamp = existingAnswer?.aiAnalysis?.lastUpdated;
+        
+          // Return existing response if we have one and it was generated after the last answer update
+          if (existingButtonResponse) {
+            
+            const existingAnswerData = {
+              value: existingValue || '',
+              aiAnalysis: {
+                analysis: existingButtonResponse,
+                buttonResponses: {
+                  ...(existingAnswer?.aiAnalysis?.buttonResponses || {})
+                }, 
+                lastUpdated: lastAnalysisTimestamp
+              },
+            };
+          
+            return existingAnswerData;
+        }
       }
-    }
+  }
 
     // Only proceed with API call if we need a new response
     const settings = await loadUserSettings();
@@ -77,9 +100,10 @@ export const generateAIResponse = async (
             buttonResponses: buttonId
               ? {
                   ...(currentAnswer?.aiAnalysis?.buttonResponses || {}),
-                  [buttonId]: response,
+                  [buttonId]: response
                 }
-              : currentAnswer?.aiAnalysis?.buttonResponses || {},
+                : currentAnswer?.aiAnalysis?.buttonResponses || {},
+            lastUpdated: new Date().toISOString()
           },
         };
          

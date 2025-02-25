@@ -93,6 +93,8 @@ export const getAnswer = async (
       _isStoredAnswer: true,
     };
 
+    answerData.updated_at = result.data.updated_at;
+
     // Handle question type-specific logic
     switch (question.type) {
       case 'multiple-choice':
@@ -143,6 +145,7 @@ export const getAnswer = async (
             : typeof answer.aiAnalysis === 'string'
             ? answer.aiAnalysis
             : '',
+        lastUpdated: answer.aiAnalysis?.lastUpdated,
         buttonResponses:
           typeof answer.aiAnalysis === 'object' && answer.aiAnalysis.buttonResponses
             ? answer.aiAnalysis.buttonResponses
@@ -157,8 +160,6 @@ export const getAnswer = async (
     return { question }; // Return question in case of any error
   }
 };
-
-
 
 export const saveAnswer = async (
   questionId: number,
@@ -274,8 +275,9 @@ export const saveAnswer = async (
         analysis: aiAnalysis || existingAnswer?.aiAnalysis?.analysis || "",
         buttonResponses: {
           ...(existingAnswer?.aiAnalysis?.buttonResponses || {}),
-          ...(answer.aiAnalysis?.buttonResponses || {}),
+          ...(answer.aiAnalysis?.buttonResponses || {}),       
         },
+        lastUpdated: answer.aiAnalysis?.lastUpdated,
       };
     }
 
