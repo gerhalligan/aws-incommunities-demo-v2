@@ -172,9 +172,9 @@ export const QuizContent = ({
 
         globalPrompt = currentQuestion.aiLookup.prompt;
 
-        prompt = (prompt ? prompt + "\n\n" : "") + globalPrompt; 
-        prompt = prompt.replace("{{question}}", currentQuestion.question);
-        prompt = prompt.replace("{{answer}}", answer);
+        prompt = (prompt ? prompt : "") + "<system>" +  globalPrompt + "</system>"; 
+        prompt = prompt.replace("/{{question}}/g", currentQuestion.question);
+        prompt = prompt.replace(/{{answer}}/g, answer);
   
         const response = await generateAIResponse(prompt, {
           questionId: currentQuestion.id,

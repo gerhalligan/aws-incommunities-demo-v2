@@ -85,10 +85,12 @@ export const generateAIResponse = async (
       throw new Error(`${provider === 'openai' ? 'OpenAI' : 'Perplexity'} API key not found. Please set it in the Settings page.`);
     }
 
+    const { systemPrompt, userPrompt } = extractSystemAndUserPrompt(prompt);
+
     // Generate AI response
     const response = provider === 'openai' 
-      ? await generateOpenAIResponse(prompt, apiKey)
-      : await generatePerplexityResponse(prompt, apiKey);
+      ? await generateOpenAIResponse(userPrompt, systemPrompt, apiKey)
+      : await generatePerplexityResponse(userPrompt, systemPrompt, apiKey);
 
     // Save the response if needed
     if (questionId !== undefined && currentAnswer) {
@@ -121,4 +123,15 @@ export const generateAIResponse = async (
     console.error('Error in generateAIResponse:', error);
     throw error;
   }
+};
+
+// Function to extract system and user messages from prompt
+const extractSystemAndUserPrompt = (prompt) => {
+  const systemPromptMatch = prompt.match(/<system>([\s\S]*?)<\/system>/);
+  const systemPrompt = systemPromptMatch ? systemPromptMatch[1].trim() : "Be precise and concise.";
+
+  // Remove system prompt from original prompt
+  const userPrompt = prompt.replace(/<system>[\s\S]*?<\/system>/g, "").trim();
+
+  return { systemPrompt, userPrompt };
 };

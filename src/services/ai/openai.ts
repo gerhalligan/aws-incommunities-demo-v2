@@ -1,6 +1,6 @@
 const OPENAI_API_URL = "https://api.openai.com/v1/chat/completions";
 
-export const generateOpenAIResponse = async (prompt: string, apiKey: string): Promise<string> => {
+export const generateOpenAIResponse =  async (userPrompt, systemPrompt = "Be precise and concise.", apiKey): Promise<string> => {
   const response = await fetch(OPENAI_API_URL, {
     method: "POST",
     headers: {
@@ -10,10 +10,8 @@ export const generateOpenAIResponse = async (prompt: string, apiKey: string): Pr
     body: JSON.stringify({
       model: "gpt-4",
       messages: [
-        {
-          role: "user",
-          content: prompt,
-        },
+        { role: "system", content: systemPrompt },
+        { role: "user", content: userPrompt }
       ],
       temperature: 0.7,
     }),
