@@ -1,5 +1,4 @@
 const OPENAI_API_URL = "https://api.openai.com/v1/responses";
-const DEFAULT_API_KEY = "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";
 
 interface UserLocation {
   type: "approximate";
@@ -30,7 +29,7 @@ export const generateOpenAIResponse = async (
   }];
 
   // Use default key if none provided
-  const effectiveApiKey = apiKey || DEFAULT_API_KEY;
+  const effectiveApiKey = apiKey;
 
   const response = await fetch(OPENAI_API_URL, {
     method: "POST",
