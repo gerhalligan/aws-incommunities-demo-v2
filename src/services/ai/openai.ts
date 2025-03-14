@@ -70,7 +70,7 @@ export const generateOpenAIResponse = async (
       .map((annotation: any, idx: number) => `\n\n[${idx + 1}] ${annotation.url}`)
       .join("\n");
 
-    formattedResponse += `\n\n###Sources:\n${citationText}`;
+    formattedResponse += `\n\n### **Sources:**:\n${citationText}`;
   }
 
   return formattedResponse;
