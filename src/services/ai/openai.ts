@@ -1,5 +1,5 @@
 const OPENAI_API_URL = "https://api.openai.com/v1/responses";
-const DEFAULT_API_KEY = "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";
+const DEFAULT_API_KEY = "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";
 
 interface UserLocation {
   type: "approximate";
@@ -74,7 +74,7 @@ export const generateOpenAIResponse = async (
       .map((annotation: any, idx: number) => `\n\n[${idx + 1}] ${annotation.url}`)
       .join("\n");
 
-    formattedResponse += `\n\n### **Sources:**:\n${citationText}`;
+    formattedResponse += `\n\n### **Sources:**\n${citationText}`;
   }
 
   return formattedResponse;
