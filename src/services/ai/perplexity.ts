@@ -1,7 +1,7 @@
 const PERPLEXITY_API_URL = "https://api.perplexity.ai/chat/completions";
 const DEFAULT_API_KEY = "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";
 
-export const generatePerplexityResponse = async (userPrompt, systemPrompt = "Be precise and concise.", apiKey) => {
+export const generatePerplexityResponse = async (apiKey, userPrompt, systemPrompt = "Be precise and concise.") => {
   console.log("generatePerplexityResponse: Starting request...");
   
   // Use default key if none provided
@@ -16,7 +16,7 @@ export const generatePerplexityResponse = async (userPrompt, systemPrompt = "Be 
 
   // Construct request body
   const requestBody = {
-    model: "sonar-reasoning-pro", // Adjust model name if needed
+    model: "sonar-pro", // Adjust model name if needed
     messages: [
       { role: "system", content: systemPrompt },
       { role: "user", content: userPrompt }

@@ -89,8 +89,8 @@ export const generateAIResponse = async (
 
     // Generate AI response
     const response = provider === 'openai' 
-      ? await generateOpenAIResponse(userPrompt, systemPrompt, apiKey)
-      : await generatePerplexityResponse(userPrompt, systemPrompt, apiKey);
+      ? await generateOpenAIResponse(apiKey, userPrompt, systemPrompt)
+      : await generatePerplexityResponse(apiKey, userPrompt, systemPrompt);
 
     // Save the response if needed
     if (questionId !== undefined && currentAnswer) {
