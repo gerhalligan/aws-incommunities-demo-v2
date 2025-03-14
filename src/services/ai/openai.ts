@@ -17,7 +17,7 @@ interface WebSearchConfig {
 export const generateOpenAIResponse = async (
   apiKey: string,
   userPrompt: string,
-  systemPrompt: string = "Be precise and concise.", 
+  systemPrompt: string = "Be precise and concise.",
   userLocation?: UserLocation,
   searchContextSize: "low" | "medium" | "high" = "medium",
   model: string = "gpt-4o"
@@ -37,33 +37,40 @@ export const generateOpenAIResponse = async (
     body: JSON.stringify({
       model,
       tools,
-      input: userPrompt
+      input: `This is the start of the Developer Prompt.\n\n${systemPrompt}\n\nThis is the Start of the User Prompt\n\n${userPrompt}`
     }),
   });
 
   if (!response.ok) {
-    throw new Error(`Failed to generate OpenAI response: ${response.status} ${response.statusText}`);
+    const errorDetails = await response.text();
+    throw new Error(`Failed to generate OpenAI response: ${response.status} ${response.statusText}. Details: ${errorDetails}`);
   }
 
   const data = await response.json();
 
-  if (!data.length || !data.find((item: any) => item.type === "message")) {
-    throw new Error("Invalid response format from OpenAI");
+  const messageItem = data.output.find((item: any) => item.type === "message");
+
+  if (!messageItem) {
+    throw new Error("Invalid response format from OpenAI: no message type found");
   }
 
-  const message = data.find((item: any) => item.type === "message");
-  const contentItem = message.content.find((c: any) => c.type === "output_text");
-  const annotations = contentItem.annotations || [];
+  const outputTextItem = messageItem.content.find((c: any) => c.type === "output_text");
+
+  if (!outputTextItem || !outputTextItem.text) {
+    throw new Error("Invalid response format from OpenAI: no output_text found");
+  }
+
+  const annotations = outputTextItem.annotations || [];
 
   // Format citations
-  let formattedResponse = contentItem.text;
+  let formattedResponse = outputTextItem.text;
 
   if (annotations.length) {
     const citationText = annotations
-      .map((annotation: any, idx: number) => `[${idx + 1}] ${annotation.url}`)
+      .map((annotation: any, idx: number) => `\n\n[${idx + 1}] ${annotation.url}`)
       .join("\n");
 
-    formattedResponse += `\n\n### Sources:\n${citationText}`;
+    formattedResponse += `\n\n###Sources:\n${citationText}`;
   }
 
   return formattedResponse;
